@@ -1,0 +1,20 @@
+{
+	"browser": true,
+	"curly": true,
+	"elision": true,
+	"esversion": 10,
+	"expr": true,
+	"globals": {
+		"Color": false,
+		"drawTile": false,
+		"engineInit": false,
+		"EngineObject": false,
+		"FontImage": false,
+		"js13k": true,
+		"mainCanvas": false,
+		"Timer": false,
+		"vec2": false,
+		"Vector2": false
+	},
+	"node": true
+}
