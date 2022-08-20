@@ -39,6 +39,6 @@ for f in ${FILES[@]}; do
 	echo '' >> "$OUTPUT_FILENAME"
 done
 
-# Removed "engineMedals.js" to drastically reduce the later ZIP size (~14 kB!).
+# Removed "engineMedals.js" to drastically reduce the later ZIP size (~10 kB!).
 # Add dummy function to avoid errors:
 printf '\nfunction medalsRender() {}\n' >> "$OUTPUT_FILENAME"

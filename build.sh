@@ -27,10 +27,15 @@ sed -E -i'' 's/<script src="([a-zA-Z0-9_-]+\/)+[a-zA-Z0-9_.-]{2,}\.js"><\/script
 terser \
 	'littlejs.custom.js' \
 	'js13k.js' \
-	'Character.js' \
+	'Block.js' \
+	'Creature.js' \
+	'Player.js' \
+	'Ground.js' \
+	'Level.js' \
+	'Weapon.js' \
 	--ecma 10 --warn \
 	--compress --toplevel \
-	--mangle reserved=['js13k'] \
+	--mangle --mangle-props \
 	-o 'i.js'
 
 sed -i'' 's/^"use strict";//' 'i.js'
@@ -38,14 +43,8 @@ sed -i'' 's/^"use strict";//' 'i.js'
 rm 'index-dev.html'
 find -type f -name '*.js' -not -name 'i.js' -delete
 
-JS_SIZE=$( stat --printf="%s" 'i.js' )
-HTML_SIZE=$( stat --printf="%s" 'index.html' )
-
 # # Compress the JS further.
 # roadroller 'i.js' -o 'i.js' -q
-# JS_SIZE=$( stat --printf="%s" 'i.js' )
-
-UNZIPPED_SIZE=$(( $JS_SIZE + $HTML_SIZE ))
 
 # ZIP up everything needed.
 # 9: highest compression level
@@ -74,7 +73,6 @@ FREE_SPACE=$(( $MAX_SIZE - $CURRENT_SIZE ))
 printf '\n'
 printf '  Max size:                %5d bytes\n' "$MAX_SIZE"
 printf '  ------------------------------------\n'
-printf '  - File sizes (unzipped): %5d bytes\n' "$UNZIPPED_SIZE"
 printf '  - ZIP size (before ECT): %5d bytes\n' "$BEFORE_EXTRA_COMPRESS_SIZE"
 printf '  - ZIP size (after ECT):  %5d bytes\n' "$CURRENT_SIZE"
 printf '  ------------------------------------\n'

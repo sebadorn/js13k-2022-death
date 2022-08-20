@@ -4,22 +4,35 @@
 /**
  * @namespace js13k
  */
-const js13k = {};
+const js13k = {
+	TILEDATA_GROUND: -1,
+	TILEDATA_EMPTY: 0,
+	TILEDATA_BLOCK: 1
+};
 
 
 window.addEventListener( 'load', () => {
+	// LittleJS settings
+	cameraScale = 96;
+	canvasMaxSize = vec2( Infinity, Infinity );
+	fontDefault = 'monospace';
+	tileSizeDefault = vec2( 32 );
+
+	let level = null;
+
 	engineInit(
 		// init/setup
 		() => {
-			mainCanvas.style.background = new Color( 0.16, 0.4, 0.13 );
-			new js13k.Character( vec2( 0, 0 ) );
+			level = new js13k.Level();
 		},
 
 		// update, handle input and game state
 		() => {},
 
 		// post update, handle camera
-		() => {},
+		() => {
+			cameraPos = level.player.pos;
+		},
 
 		// before rendering, draw background effects
 		() => {},
