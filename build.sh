@@ -32,8 +32,9 @@ terser \
 	'Player.js' \
 	'Ground.js' \
 	'Level.js' \
+	'TurnManager.js' \
 	'Weapon.js' \
-	--ecma 10 --warn \
+	--ecma 11 --warn \
 	--compress --toplevel \
 	--mangle --mangle-props \
 	-o 'i.js'

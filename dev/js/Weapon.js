@@ -14,7 +14,7 @@ js13k.Weapon = class extends EngineObject {
 
 		this.attackDamage = 1;
 		this.attackRange = 1;
-		this.name = 'Some Weapon';
+		this.name = null;
 		this.owner = owner;
 	}
 
