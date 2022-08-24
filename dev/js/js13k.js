@@ -6,6 +6,7 @@
  */
 const js13k = {
 	currentLevel: null,
+	tileHighlightColor: new Color( 1, 1, 1 ),
 
 	TILEDATA_GROUND: -1,
 	TILEDATA_EMPTY: 0,
@@ -19,8 +20,6 @@ window.addEventListener( 'load', () => {
 	canvasMaxSize = vec2( Infinity, Infinity );
 	fontDefault = 'monospace';
 	tileSizeDefault = vec2( 32 );
-
-	const hlColor = new Color( 1, 1, 1 );
 
 	engineInit(
 		// init/setup
@@ -43,23 +42,7 @@ window.addEventListener( 'load', () => {
 				return;
 			}
 
-			if( js13k.TurnManager.isPlayerTurn() ) {
-				const mouseX = Math.round( mousePos.x );
-				const mouseY = Math.round( mousePos.y );
-
-				const tile = js13k.currentLevel.tiles[mouseX]?.[mouseY];
-
-				if( tile ) {
-					tile.color = hlColor;
-
-					if( mouseWasPressed( 0 ) ) {
-						js13k.currentLevel.player.pos.x = mouseX;
-						js13k.currentLevel.player.pos.y = mouseY;
-
-						js13k.TurnManager.next();
-					}
-				}
-			}
+			js13k.TurnManager.doTurn();
 
 			cameraPos = js13k.currentLevel.player.pos;
 		},

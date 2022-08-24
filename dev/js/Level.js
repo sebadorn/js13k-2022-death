@@ -10,6 +10,9 @@ js13k.Level = class {
 	constructor() {
 		this.size = vec2( 20 );
 
+		js13k.TurnManager.reset();
+
+		// Tiles
 		initTileCollision( this.size );
 		this.tiles = [...Array( this.size.x )].map( _ => [] );
 
@@ -20,14 +23,30 @@ js13k.Level = class {
 			}
 		}
 
+		// Player
 		this.player = new js13k.Player( vec2( 10 ) );
+		js13k.TurnManager.addCreature( this.player );
 
+		// Monsters
+		this.monsters = [];
+
+		const monsterPosList = [
+			vec2( 0, 0 ),
+			vec2( 1, 0 ),
+			vec2( 2, 0 ),
+			vec2( 3, 0 )
+		];
+
+		monsterPosList.forEach( pos => {
+			const monster = new js13k.Creature( pos, vec2( 0.3 ), -1, new Color( 1, 0, 0 ) );
+			this.monsters.push( monster );
+			js13k.TurnManager.addCreature( monster );
+		} );
+
+		// Other objects
 		this.objects = [
 			new js13k.Block( vec2( 10, 12 ) )
 		];
-
-		js13k.TurnManager.reset();
-		js13k.TurnManager.addCreature( this.player );
 	}
 
 

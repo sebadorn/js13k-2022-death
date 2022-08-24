@@ -22,6 +22,38 @@ js13k.TurnManager = {
 
 
 	/**
+	 *
+	 */
+	doTurn() {
+		if( this.isPlayerTurn() ) {
+			const mouseX = Math.round( mousePos.x );
+			const mouseY = Math.round( mousePos.y );
+
+			const tile = js13k.currentLevel.tiles[mouseX]?.[mouseY];
+
+			if( tile ) {
+				tile.color = js13k.tileHighlightColor;
+
+				if( mouseWasPressed( 0 ) ) {
+					js13k.turnCreature.pos.x = mouseX;
+					js13k.turnCreature.pos.y = mouseY;
+
+					// End turn for player and get next creature.
+					js13k.turnCreature = this.next();
+				}
+			}
+		}
+		else if( js13k.turnCreature ) {
+			const action = js13k.turnCreature.decideOnTurnAction();
+			action && action();
+
+			// End turn for creature and get next.
+			js13k.turnCreature = this.next();
+		}
+	},
+
+
+	/**
 	 * Get the creature which's turn it currently is.
 	 * @return {js13k.Creature}
 	 */
@@ -46,6 +78,8 @@ js13k.TurnManager = {
 		if( ++this._current >= this._creatures.length ) {
 			this._current = 0;
 		}
+
+		return this.get();
 	},
 
 
