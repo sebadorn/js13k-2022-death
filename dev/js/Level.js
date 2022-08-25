@@ -37,8 +37,8 @@ js13k.Level = class {
 			vec2( 3, 0 )
 		];
 
-		monsterPosList.forEach( pos => {
-			const monster = new js13k.Creature( pos, vec2( 0.3 ), -1, new Color( 1, 0, 0 ) );
+		monsterPosList.forEach( ( pos, i ) => {
+			const monster = new js13k.Creature( 'Monster #' + ( i + 1 ), pos, vec2( 0.3 ), -1, new Color( 1, 0, 0 ) );
 			this.monsters.push( monster );
 			js13k.TurnManager.addCreature( monster );
 		} );

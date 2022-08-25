@@ -28,22 +28,29 @@ window.addEventListener( 'load', () => {
 			js13k.turnCreature = js13k.TurnManager.get();
 		},
 
-		// update, handle input and game state
+		// update, handle game state
+		() => {
+			const player = js13k.currentLevel.player;
+
+			if( player ) {
+				if( player.health <= 0 ) {
+					// TODO: game over
+				}
+			}
+		},
+
+		// post update
 		() => {
 			// toggle pause: Escape
 			if( keyWasPressed( 27 ) ) {
 				paused = !paused;
 			}
-		},
 
-		// post update, handle camera
-		() => {
 			if( paused ) {
 				return;
 			}
 
 			js13k.TurnManager.doTurn();
-
 			cameraPos = js13k.currentLevel.player.pos;
 		},
 
