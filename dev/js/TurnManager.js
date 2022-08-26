@@ -55,6 +55,8 @@ js13k.TurnManager = {
 	 *
 	 */
 	endTurn() {
+		js13k.currentLevel.updateTileMap();
+
 		this._turnAction = null;
 		js13k.turnCreature = this.next();
 	},

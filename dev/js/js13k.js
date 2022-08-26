@@ -59,11 +59,10 @@ window.addEventListener( 'load', () => {
 
 		// after rendering, draw overlay, e.g. UI
 		() => {
-			// const font = new FontImage();
-			// font.drawText( 'Test', vec2( 0, 22 ), 0.2, 1 );
+			js13k.UI.drawHUD();
 		},
 
 		// sprite sheet
-		// 'tiles.png'
+		'tiles.png'
 	);
 } );

@@ -25,13 +25,16 @@
 		"min": false,
 		"mousePos": false,
 		"mouseWasPressed": false,
+		"overlayContext": false,
 		"paused": true,
 		"rand": false,
 		"setTileCollisionData": false,
+		"tileImage": false,
 		"tileSizeDefault": true,
 		"Timer": false,
 		"vec2": false,
-		"Vector2": false
+		"Vector2": false,
+		"worldToScreen": false
 	},
 	"node": true
 }

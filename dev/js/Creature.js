@@ -16,10 +16,10 @@ js13k.Creature = class extends EngineObject {
 	constructor( name, pos, size, tileIndex, color ) {
 		super( pos, size, tileIndex, null, 0, color );
 
-		this._fontImage = new FontImage();
+		this._overlay = null;
 
 		this.attackDamage = 1;
-		this.attackRange = 1;
+		this.attackRange = 1.5;
 		this.health = 3;
 		this.moveDistance = 1;
 		this.name = name;
@@ -29,7 +29,6 @@ js13k.Creature = class extends EngineObject {
 
 
 	/**
-	 *
 	 * @return {function}
 	 */
 	decideOnTurnAction() {
@@ -47,26 +46,40 @@ js13k.Creature = class extends EngineObject {
 			}
 			// Move towards player.
 			else {
-				const step = min( this.moveDistance + 0.5, distance );
-				const target = this.pos.add( player.pos.subtract( this.pos ).normalize().scale( step ) ).floor();
-				target.x = clamp( target.x, 0, level.size.x - 1 );
-				target.y = clamp( target.y, 0, level.size.y - 1 );
+				let normedDirection = player.pos.subtract( this.pos ).normalize();
+				let step = min( this.moveDistance, distance );
+				let target = null;
+
+				// Check if target tile is free. If not free try to find
+				// a free tile on the path there. Only relevant for
+				// creatures if a moveDistance >= 2.
+				while( step >= 1 ) {
+					target = this.pos.add( normedDirection.scale( step ) );
+					target.x = Math.round( clamp( target.x, 0, level.size.x - 1 ) );
+					target.y = Math.round( clamp( target.y, 0, level.size.y - 1 ) );
+
+					if( level.canTileBeMovedTo( target ) ) {
+						break;
+					}
+
+					step--;
+				}
+
+				if( step < 1 ) {
+					target = this.pos;
+				}
 
 				action = this.getTurnActionMove( target.x, target.y );
 			}
 		}
 		// Nothing to do. Move 1 tile in a random direction or just stand still.
 		else {
-			let xMax = this.pos.x >= level.size.x - 1 ? 0 : 1;
-			let xMin = this.pos.x <= 0 ? 0 : -1;
+			let target = this.pos;
+			const free = level.getFreeSurroundingTiles( this.pos );
 
-			let yMax = this.pos.y >= level.size.y - 1 ? 0 : 1;
-			let yMin = this.pos.y <= 0 ? 0 : -1;
-
-			// TODO: make sure tile isn't already taken
-
-			const step = vec2( rand( xMax, xMin ), rand( yMax, yMin ) );
-			const target = this.pos.add( step ).floor();
+			if( free.length > 0 ) {
+				target = free[Math.round( rand( free.length - 1, 0 ) )];
+			}
 
 			action = this.getTurnActionMove( target.x, target.y );
 		}
@@ -76,7 +89,18 @@ js13k.Creature = class extends EngineObject {
 
 
 	/**
-	 *
+	 * @override
+	 */
+	destroy() {
+		if( this._overlay ) {
+			this._overlay.remove();
+		}
+
+		super.destroy();
+	}
+
+
+	/**
 	 * @param  {js13k.Creature} target
 	 * @return {function}
 	 */
@@ -89,7 +113,6 @@ js13k.Creature = class extends EngineObject {
 
 
 	/**
-	 *
 	 * @param  {number} endX
 	 * @param  {number} endY
 	 * @return {function}
@@ -120,13 +143,22 @@ js13k.Creature = class extends EngineObject {
 	 * @override
 	 */
 	render() {
-		if(
-			abs( mousePos.x - this.pos.x ) < this.size.x / 2 &&
-			abs( mousePos.y - this.pos.y ) < this.size.y / 2
-		) {
-			const pos = this.pos.copy();
-			pos.y += 0.8;
-			this._fontImage.drawText( this.name, pos, 0.03, true );
+		if( !paused ) {
+			if(
+				abs( mousePos.x - this.pos.x ) < this.size.x / 2 &&
+				abs( mousePos.y - this.pos.y ) < this.size.y / 2
+			) {
+				if( !this._overlay ) {
+					this._overlay = js13k.UI.hoverBoxCreature( this.name, worldToScreen( this.pos ) );
+				}
+				else {
+					this._overlay.hidden = false;
+					js13k.UI.updateNode( this._overlay, { pos: worldToScreen( this.pos ) } );
+				}
+			}
+			else if( this._overlay ) {
+				this._overlay.hidden = true;
+			}
 		}
 
 		super.render();

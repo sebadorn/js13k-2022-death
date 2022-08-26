@@ -47,6 +47,77 @@ js13k.Level = class {
 		this.objects = [
 			new js13k.Block( vec2( 10, 12 ) )
 		];
+
+		this._tileContentMap = {};
+		this.updateTileMap();
+	}
+
+
+	/**
+	 * @param  {Vector2} pos
+	 * @return {boolean}
+	 */
+	canTileBeMovedTo( pos ) {
+		// Tile is free if there is no entry in the tile content map.
+		return !this._tileContentMap[pos.toString( 0 )];
+	}
+
+
+	/**
+	 *
+	 * @param  {Vector2} pos
+	 * @return {Vector2[]}
+	 */
+	getFreeSurroundingTiles( pos ) {
+		const directions = [];
+
+		for( let i = -1; i <= 1; i++ ) {
+			for( let j = -1; j <= 1; j++ ) {
+				if( i !== 0 && j !== 0 ) {
+					directions.push( vec2( i, j ) );
+				}
+			}
+		}
+
+		const free = [];
+
+		directions.forEach( direction => {
+			const posTest = pos.add( direction );
+
+			// Do not leave the map.
+			if(
+				posTest.x < 0 || posTest.x >= this.size.x ||
+				posTest.y < 0 || posTest.y >= this.size.y
+			) {
+				return;
+			}
+
+			const entry = this._tileContentMap[posTest.toString(0)];
+
+			if( !entry ) {
+				free.push( posTest );
+			}
+		} );
+
+		return free;
+	}
+
+
+	/**
+	 *
+	 */
+	updateTileMap() {
+		this._tileContentMap = {};
+
+		const add = entry => {
+			const key = entry.pos.toString( 0 );
+			this._tileContentMap[key] = this._tileContentMap[key] || [];
+			this._tileContentMap[key].push( entry );
+		};
+
+		this.objects.forEach( object => add( object ) );
+		this.monsters.forEach( monster => add( monster ) );
+		add( this.player );
 	}
 
 
