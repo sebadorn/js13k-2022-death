@@ -96,6 +96,8 @@ js13k.Creature = class extends EngineObject {
 			this._overlay.remove();
 		}
 
+		js13k.TurnManager.removeCreature( this );
+
 		super.destroy();
 	}
 
@@ -107,6 +109,11 @@ js13k.Creature = class extends EngineObject {
 	getTurnActionAttack( target ) {
 		return cbEnd => {
 			target.health -= this.attackDamage;
+
+			if( target.health <= 0 ) {
+				target.destroy();
+			}
+
 			cbEnd();
 		};
 	}

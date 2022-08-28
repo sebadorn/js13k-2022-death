@@ -59,7 +59,7 @@ js13k.Level = class {
 	 */
 	canTileBeMovedTo( pos ) {
 		// Tile is free if there is no entry in the tile content map.
-		return !this._tileContentMap[pos.toString( 0 )];
+		return !this.getTileContent( pos );
 	}
 
 
@@ -92,7 +92,7 @@ js13k.Level = class {
 				return;
 			}
 
-			const entry = this._tileContentMap[posTest.toString(0)];
+			const entry = this._tileContentMap[posTest.toString( 0 )];
 
 			if( !entry ) {
 				free.push( posTest );
@@ -105,11 +105,25 @@ js13k.Level = class {
 
 	/**
 	 *
+	 * @param  {Vector2} pos
+	 * @return {?EngineObject[]}
+	 */
+	getTileContent( pos ) {
+		return this._tileContentMap[pos.toString( 0 )];
+	}
+
+
+	/**
+	 *
 	 */
 	updateTileMap() {
 		this._tileContentMap = {};
 
 		const add = entry => {
+			if( entry.destroyed ) {
+				return;
+			}
+
 			const key = entry.pos.toString( 0 );
 			this._tileContentMap[key] = this._tileContentMap[key] || [];
 			this._tileContentMap[key].push( entry );

@@ -15,6 +15,8 @@ js13k.Player = class extends js13k.Creature {
 		const color = new Color();
 
 		super( 'Player', pos, size, tileIndex, color );
+
+		this.moveDistance = 5;
 	}
 
 

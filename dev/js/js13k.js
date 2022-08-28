@@ -6,7 +6,8 @@
  */
 const js13k = {
 	currentLevel: null,
-	tileHighlightColor: new Color( 1, 1, 1 ),
+	tileColorAttackTarget: new Color( 1, 0, 0 ),
+	tileColorMoveTarget: new Color( 1, 1, 1 ),
 
 	TILEDATA_GROUND: -1,
 	TILEDATA_EMPTY: 0,

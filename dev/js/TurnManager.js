@@ -15,10 +15,23 @@ js13k.TurnManager = {
 	 * @param {js13k.Creature} creature
 	 */
 	addCreature( creature ) {
-		this._creatures.push( {
-			creature: creature,
-			turn: this._creatures.length
-		} );
+		this._creatures.push( creature );
+	},
+
+
+	/**
+	 *
+	 * @param {js13k.Creature} creature
+	 */
+	removeCreature( creature ) {
+		for( let i = 0; i < this._creatures.length; i++ ) {
+			const entry = this._creatures[i];
+
+			if( entry === creature ) {
+				this._creatures.splice( i, 1 );
+				break;
+			}
+		}
 	},
 
 
@@ -38,10 +51,37 @@ js13k.TurnManager = {
 			const tile = js13k.currentLevel.tiles[mouseX]?.[mouseY];
 
 			if( tile ) {
-				tile.color = js13k.tileHighlightColor;
+				const mouseRounded = vec2( mouseX, mouseY );
+				const distance = mouseRounded.distance( js13k.turnCreature.pos );
+				const tileContent = js13k.currentLevel.getTileContent( vec2( mouseX, mouseY ) );
 
-				if( mouseWasPressed( 0 ) ) {
-					this._turnAction = js13k.turnCreature.getTurnActionMove( mouseX, mouseY );
+				// Show tile as possible move target.
+				if( !tileContent ) {
+					// Check if tile is in move distance.
+					if( distance <= js13k.turnCreature.moveDistance ) {
+						tile.color = js13k.tileColorMoveTarget;
+
+						// Move to tile.
+						if( mouseWasPressed( 0 ) ) {
+							this._turnAction = js13k.turnCreature.getTurnActionMove( mouseX, mouseY );
+						}
+					}
+				}
+				// Show tile as possible attack target.
+				else {
+					// Check if tile is in attack distance.
+					if( distance <= js13k.turnCreature.attackRange ) {
+						const creature = tileContent.find( c => c instanceof js13k.Creature );
+
+						if( creature !== js13k.turnCreature ) {
+							tile.color = js13k.tileColorAttackTarget;
+
+							// Attack creature on the tile.
+							if( mouseWasPressed( 0 ) ) {
+								this._turnAction = js13k.turnCreature.getTurnActionAttack( creature );
+							}
+						}
+					}
 				}
 			}
 		}
@@ -67,7 +107,7 @@ js13k.TurnManager = {
 	 * @return {js13k.Creature}
 	 */
 	get() {
-		return this._creatures[this._current].creature;
+		return this._creatures[this._current];
 	},
 
 
