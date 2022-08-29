@@ -6,6 +6,8 @@ js13k.UI = {
 
 	parser: new DOMParser(),
 
+	_gameOverScreen: null,
+
 
 	/**
 	 * Draw the fixed positioned UI overlay.
@@ -39,6 +41,35 @@ js13k.UI = {
 		this.updateNode( node, { pos: pos } );
 
 		return node;
+	},
+
+
+	/**
+	 *
+	 */
+	showGameOver() {
+		if( this._gameOverScreen ) {
+			return;
+		}
+
+		const node = this.parser.parseFromString(
+			'<div>YOU STAYED DEAD</div>',
+			'text/html'
+		).body.firstChild;
+
+		node.style.background = '#000';
+		node.style.color = '#F00';
+		node.style.font = 'bold 72px Arial, sans-serif';
+		node.style.height = '100vh';
+		node.style.opacity = 0.7;
+		node.style.paddingTop = '45%';
+		node.style.position = 'absolute';
+		node.style.textAlign = 'center';
+		node.style.width = '100%';
+
+		document.body.append( node );
+
+		this._gameOverScreen = node;
 	},
 
 

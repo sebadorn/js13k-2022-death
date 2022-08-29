@@ -16,6 +16,7 @@ js13k.Player = class extends js13k.Creature {
 
 		super( 'Player', pos, size, tileIndex, color );
 
+		this.health = 3;
 		this.moveDistance = 5;
 	}
 

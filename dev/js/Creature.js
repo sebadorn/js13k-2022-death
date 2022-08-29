@@ -18,13 +18,17 @@ js13k.Creature = class extends EngineObject {
 
 		this._overlay = null;
 
+		this.name = name;
+
+		this.health = 1;
+		this.moveDistance = 1;
+		this.viewRange = 5;
+
+		this.defaultNumTurnMoves = 1;
+		this.turnMoves = this.defaultNumTurnMoves;
+
 		this.attackDamage = 1;
 		this.attackRange = 1.5;
-		this.health = 3;
-		this.moveDistance = 1;
-		this.name = name;
-		this.viewRange = 5;
-		this.weapon = null; // TODO: weapon should decide attack damage and range
 	}
 
 

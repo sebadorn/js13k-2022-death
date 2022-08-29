@@ -6,6 +6,7 @@
  */
 const js13k = {
 	currentLevel: null,
+	isGameOver: false,
 	tileColorAttackTarget: new Color( 1, 0, 0 ),
 	tileColorMoveTarget: new Color( 1, 1, 1 ),
 
@@ -31,17 +32,26 @@ window.addEventListener( 'load', () => {
 
 		// update, handle game state
 		() => {
+			if( this.isGameOver ) {
+				return;
+			}
+
 			const player = js13k.currentLevel.player;
 
 			if( player ) {
 				if( player.health <= 0 ) {
-					// TODO: game over
+					this.isGameOver = true;
+					js13k.UI.showGameOver();
 				}
 			}
 		},
 
 		// post update
 		() => {
+			if( this.isGameOver ) {
+				return;
+			}
+
 			// toggle pause: Escape
 			if( keyWasPressed( 27 ) ) {
 				paused = !paused;
@@ -60,6 +70,10 @@ window.addEventListener( 'load', () => {
 
 		// after rendering, draw overlay, e.g. UI
 		() => {
+			if( this.isGameOver ) {
+				return;
+			}
+
 			js13k.UI.drawHUD();
 		},
 

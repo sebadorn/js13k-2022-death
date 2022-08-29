@@ -96,9 +96,14 @@ js13k.TurnManager = {
 	 */
 	endTurn() {
 		js13k.currentLevel.updateTileMap();
-
 		this._turnAction = null;
-		js13k.turnCreature = this.next();
+
+		// If creature has no turns left for this
+		// round, continue to next creature.
+		if( --js13k.turnCreature.turnMoves <= 0 ) {
+			js13k.turnCreature.turnMoves = js13k.turnCreature.defaultNumTurnMoves;
+			js13k.turnCreature = this.next();
+		}
 	},
 
 
