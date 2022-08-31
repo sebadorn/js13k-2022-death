@@ -26,13 +26,13 @@ window.addEventListener( 'load', () => {
 	engineInit(
 		// init/setup
 		() => {
-			js13k.currentLevel = new js13k.Level();
+			js13k.currentLevel = new js13k.Level.HallOfHel();
 			js13k.turnCreature = js13k.TurnManager.get();
 		},
 
 		// update, handle game state
 		() => {
-			if( this.isGameOver ) {
+			if( js13k.isGameOver ) {
 				return;
 			}
 
@@ -40,7 +40,7 @@ window.addEventListener( 'load', () => {
 
 			if( player ) {
 				if( player.health <= 0 ) {
-					this.isGameOver = true;
+					js13k.isGameOver = true;
 					js13k.UI.showGameOver();
 				}
 			}
@@ -48,7 +48,7 @@ window.addEventListener( 'load', () => {
 
 		// post update
 		() => {
-			if( this.isGameOver ) {
+			if( js13k.isGameOver ) {
 				return;
 			}
 
@@ -70,7 +70,7 @@ window.addEventListener( 'load', () => {
 
 		// after rendering, draw overlay, e.g. UI
 		() => {
-			if( this.isGameOver ) {
+			if( js13k.isGameOver ) {
 				return;
 			}
 

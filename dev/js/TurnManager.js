@@ -21,17 +21,11 @@ js13k.TurnManager = {
 
 	/**
 	 *
-	 * @param {js13k.Creature} creature
+	 * @param  {EngineObject[]} tileContent
+	 * @return {boolean}
 	 */
-	removeCreature( creature ) {
-		for( let i = 0; i < this._creatures.length; i++ ) {
-			const entry = this._creatures[i];
-
-			if( entry === creature ) {
-				this._creatures.splice( i, 1 );
-				break;
-			}
-		}
+	canAttackTile( tileContent ) {
+		return !!tileContent.find( c => c instanceof js13k.Creature );
 	},
 
 
@@ -68,7 +62,7 @@ js13k.TurnManager = {
 					}
 				}
 				// Show tile as possible attack target.
-				else {
+				else if( this.canAttackTile( tileContent ) ) {
 					// Check if tile is in attack distance.
 					if( distance <= js13k.turnCreature.attackRange ) {
 						const creature = tileContent.find( c => c instanceof js13k.Creature );
@@ -134,6 +128,22 @@ js13k.TurnManager = {
 		}
 
 		return this.get();
+	},
+
+
+	/**
+	 *
+	 * @param {js13k.Creature} creature
+	 */
+	removeCreature( creature ) {
+		for( let i = 0; i < this._creatures.length; i++ ) {
+			const entry = this._creatures[i];
+
+			if( entry === creature ) {
+				this._creatures.splice( i, 1 );
+				break;
+			}
+		}
 	},
 
 

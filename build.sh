@@ -13,6 +13,7 @@ mkdir -p 'build'
 
 cp 'dev/index-dev.html' 'build/'
 cp 'dev/js/'*.js 'build/'
+cp 'dev/js/levels/'*.js 'build/'
 cp 'dev/tiles.png' 'build/'
 
 cd 'build' > '/dev/null'
@@ -28,11 +29,12 @@ sed -E -i'' 's/<script src="([a-zA-Z0-9_-]+\/)+[a-zA-Z0-9_.-]{2,}\.js"><\/script
 terser \
 	'littlejs.custom.js' \
 	'js13k.js' \
-	'Block.js' \
 	'Creature.js' \
 	'Player.js' \
-	'Ground.js' \
 	'Level.js' \
+		'HallOfHel.js' \
+		'Niflheim.js' \
+	'Tile.js' \
 	'TurnManager.js' \
 	'UI.js' \
 	'Weapon.js' \

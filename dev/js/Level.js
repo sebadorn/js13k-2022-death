@@ -6,9 +6,10 @@ js13k.Level = class {
 
 	/**
 	 * @constructor
+	 * @param {number} size
 	 */
-	constructor() {
-		this.size = vec2( 20 );
+	constructor( size = 20 ) {
+		this.size = vec2( size );
 
 		js13k.TurnManager.reset();
 
@@ -16,40 +17,33 @@ js13k.Level = class {
 		initTileCollision( this.size );
 		this.tiles = [...Array( this.size.x )].map( _ => [] );
 
-		for( let x = 0; x < this.size.x; x++ ) {
-			for( let y = 0; y < this.size.y; y++ ) {
-				const ground = new js13k.Ground( vec2( x, y ) );
-				this.tiles[x][y] = ground;
-			}
-		}
-
-		// Player
-		this.player = new js13k.Player( vec2( 10 ) );
-		js13k.TurnManager.addCreature( this.player );
-
-		// Monsters
 		this.monsters = [];
-
-		const monsterPosList = [
-			vec2( 0, 0 ),
-			vec2( 1, 0 ),
-			vec2( 2, 0 ),
-			vec2( 3, 0 )
-		];
-
-		monsterPosList.forEach( ( pos, i ) => {
-			const monster = new js13k.Creature( 'Monster #' + ( i + 1 ), pos, vec2( 0.3 ), -1, new Color( 1, 0, 0 ) );
-			this.monsters.push( monster );
-			js13k.TurnManager.addCreature( monster );
-		} );
-
-		// Other objects
-		this.objects = [
-			new js13k.Block( vec2( 10, 12 ) )
-		];
+		this.objects = [];
 
 		this._tileContentMap = {};
-		this.updateTileMap();
+	}
+
+
+	/**
+	 *
+	 * @param {js13k.Ground} tile
+	 */
+	addTile( tile ) {
+		this.tiles[tile.pos.x][tile.pos.y] = tile;
+	}
+
+
+	/**
+	 *
+	 * @param  {Vector2} pos
+	 * @param  {number}  tileIndex
+	 * @return {EngineObject}
+	 */
+	buildObject( pos, tileIndex ) {
+		const object = new EngineObject( pos, vec2( 1 ), tileIndex );
+		object.setCollision( 0, 0, 0 );
+
+		return object;
 	}
 
 
