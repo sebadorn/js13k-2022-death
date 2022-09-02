@@ -7,3 +7,6 @@ Theme: **DEATH**
 ## Description
 
 _[tbd]_
+
+
+Best performance in Chromium-based browsers.

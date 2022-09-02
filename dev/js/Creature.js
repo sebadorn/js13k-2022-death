@@ -11,12 +11,12 @@ js13k.Creature = class extends EngineObject {
 	 * @param {Vector2} pos
 	 * @param {Vector2} size
 	 * @param {number}  tileIndex
-	 * @param {Color}   color
 	 */
-	constructor( name, pos, size, tileIndex, color ) {
-		super( pos, size, tileIndex, null, 0, color );
+	constructor( name, pos, size, tileIndex, tileSize ) {
+		super( pos, size, tileIndex, tileSize || tileSizeDefault, 0 );
 
 		this._overlay = null;
+		this._animationOffset = randInt( 1000, 0 );
 
 		this.name = name;
 
@@ -154,17 +154,21 @@ js13k.Creature = class extends EngineObject {
 	 * @override
 	 */
 	render() {
-		if( !paused ) {
+		if( !paused && this !== js13k.currentLevel.player ) {
 			if(
 				abs( mousePos.x - this.pos.x ) < this.size.x / 2 &&
 				abs( mousePos.y - this.pos.y ) < this.size.y / 2
 			) {
+				const pos = worldToScreen( this.pos );
+				pos.x += ( window.innerWidth - parseInt( mainCanvas.width, 10 ) ) / 2;
+				pos.y += ( window.innerHeight - parseInt( mainCanvas.height, 10 ) ) / 2;
+
 				if( !this._overlay ) {
-					this._overlay = js13k.UI.hoverBoxCreature( this.name, worldToScreen( this.pos ) );
+					this._overlay = js13k.UI.hoverBoxCreature( this.name, pos );
 				}
 				else {
 					this._overlay.hidden = false;
-					js13k.UI.updateNode( this._overlay, { pos: worldToScreen( this.pos ) } );
+					js13k.UI.updateNode( this._overlay, { pos: pos } );
 				}
 			}
 			else if( this._overlay ) {
@@ -173,6 +177,20 @@ js13k.Creature = class extends EngineObject {
 		}
 
 		super.render();
+	}
+
+
+	/**
+	 * @override
+	 */
+	update() {
+		this.tileIndex = 16;
+
+		if( Math.round( ( time + this._animationOffset ) * 2 ) % 4 === 0 ) {
+			this.tileIndex = 17;
+		}
+
+		super.update();
 	}
 
 

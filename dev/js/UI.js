@@ -20,7 +20,13 @@ js13k.UI = {
 		if( player ) {
 			// Draw health indicators.
 			for( let i = 0; i < player.health; i++ ) {
-				overlayContext.drawImage( tileImage, 32, 0, 16, 16, i * 64, 0, 64, 64 );
+				overlayContext.drawImage(
+					tileImage,
+					// source
+					32, 0, 16, 16,
+					// destination
+					16 + i * 42, 16, 32, 32
+				);
 			}
 		}
 	},
@@ -83,7 +89,7 @@ js13k.UI = {
 		if( data.pos ) {
 			const rect = node.getBoundingClientRect();
 			node.style.left = Math.round( data.pos.x - rect.width / 2 ) + 'px';
-			node.style.top = Math.round( data.pos.y - rect.height - 32 ) + 'px';
+			node.style.top = Math.round( data.pos.y - rect.height - 48 ) + 'px';
 		}
 	}
 

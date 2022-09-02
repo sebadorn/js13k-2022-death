@@ -7,8 +7,6 @@
 const js13k = {
 	currentLevel: null,
 	isGameOver: false,
-	tileColorAttackTarget: new Color( 1, 0, 0 ),
-	tileColorMoveTarget: new Color( 1, 1, 1 ),
 
 	TILEDATA_GROUND: -1,
 	TILEDATA_EMPTY: 0,
@@ -18,9 +16,9 @@ const js13k = {
 
 window.addEventListener( 'load', () => {
 	// LittleJS settings
-	cameraScale = 96;
-	canvasMaxSize = vec2( Infinity, Infinity );
-	fontDefault = 'monospace';
+	cameraScale = 128;
+	canvasMaxSize = vec2( 1600, 900 );
+	showWatermark = true; // TODO: disable for release
 	tileSizeDefault = vec2( 32 );
 
 	engineInit(

@@ -6,10 +6,10 @@ js13k.Level = class {
 
 	/**
 	 * @constructor
-	 * @param {number} size
+	 * @param {Vector2} size
 	 */
-	constructor( size = 20 ) {
-		this.size = vec2( size );
+	constructor( size ) {
+		this.size = size;
 
 		js13k.TurnManager.reset();
 

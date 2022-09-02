@@ -13,36 +13,44 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 
 		for( let x = 0; x < this.size.x; x++ ) {
 			for( let y = 0; y < this.size.y; y++ ) {
-				const color = new Color( 0.4, 0.4, 0.5 );
-				const ground = new js13k.Tile( vec2( x, y ), color, js13k.TILEDATA_GROUND );
+				const color = new Color( 0.2, 0.2, 0.25 );
+				const ground = new js13k.Tile( vec2( x, y ), color, 6, js13k.TILEDATA_GROUND );
 
 				this.addTile( ground );
 			}
 		}
 
-		// // Monsters
-		// const monsterPosList = [
-		// 	vec2( 0, 0 ),
-		// 	vec2( 1, 0 ),
-		// 	vec2( 2, 0 ),
-		// 	vec2( 3, 0 )
-		// ];
+		const monsterPosList = [
+			vec2( 5, 6 ),
+			vec2( 3, 7 )
+		];
 
-		// monsterPosList.forEach( ( pos, i ) => {
-		// 	const monster = new js13k.Creature( 'Monster #' + ( i + 1 ), pos, vec2( 0.3 ), -1, new Color( 1, 0, 0 ) );
-		// 	this.monsters.push( monster );
-		// 	js13k.TurnManager.addCreature( monster );
-		// } );
+		monsterPosList.forEach( pos => {
+			const monster = new js13k.Creature( 'Warrior', pos, vec2( 0.5 ), 16, vec2( 16 ) );
+			this.monsters.push( monster );
+			js13k.TurnManager.addCreature( monster );
+		} );
 
 		this.objects.push(
-			this.buildObject( vec2( 2, 10.3 ), 0 ),
-			this.buildObject( vec2( 6, 10.3 ), 0 ),
-			this.buildObject( vec2( 2, 7.3 ), 0 ),
-			this.buildObject( vec2( 6, 7.3 ), 0 ),
-			this.buildObject( vec2( 2, 4.3 ), 0 ),
-			this.buildObject( vec2( 6, 4.3 ), 0 ),
-			this.buildObject( vec2( 2, 1.3 ), 0 ),
-			this.buildObject( vec2( 6, 1.3 ), 0 )
+			// wall left top
+			this.buildObject( vec2( 0, 13 ), 2 ),
+			this.buildObject( vec2( 1, 13 ), 2 ),
+			this.buildObject( vec2( 2, 13 ), 2 ),
+
+			// wall right top
+			this.buildObject( vec2( 6, 13 ), 2 ),
+			this.buildObject( vec2( 7, 13 ), 2 ),
+			this.buildObject( vec2( 8, 13 ), 2 ),
+
+			// pillars
+			this.buildObject( vec2( 2, 10.25 ), 0 ),
+			this.buildObject( vec2( 6, 10.25 ), 0 ),
+			this.buildObject( vec2( 2, 7.25 ), 0 ),
+			this.buildObject( vec2( 6, 7.25 ), 0 ),
+			this.buildObject( vec2( 2, 4.25 ), 0 ),
+			this.buildObject( vec2( 6, 4.25 ), 0 ),
+			this.buildObject( vec2( 2, 1.25 ), 0 ),
+			this.buildObject( vec2( 6, 1.25 ), 0 )
 		);
 
 		// Player

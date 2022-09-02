@@ -48,7 +48,7 @@ sed -i'' 's/^"use strict";//' 'i.js'
 rm 'index-dev.html'
 find -type f -name '*.js' -not -name 'i.js' -delete
 
-# # Compress the JS further.
+# Compress the JS further.
 # roadroller 'i.js' -o 'i.js' -q
 
 # ZIP up everything needed.

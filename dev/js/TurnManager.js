@@ -53,7 +53,7 @@ js13k.TurnManager = {
 				if( !tileContent ) {
 					// Check if tile is in move distance.
 					if( distance <= js13k.turnCreature.moveDistance ) {
-						tile.color = js13k.tileColorMoveTarget;
+						tile.highlightMove = true;
 
 						// Move to tile.
 						if( mouseWasPressed( 0 ) ) {
@@ -68,7 +68,7 @@ js13k.TurnManager = {
 						const creature = tileContent.find( c => c instanceof js13k.Creature );
 
 						if( creature !== js13k.turnCreature ) {
-							tile.color = js13k.tileColorAttackTarget;
+							tile.highlightAttack = true;
 
 							// Attack creature on the tile.
 							if( mouseWasPressed( 0 ) ) {
