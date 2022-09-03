@@ -15,8 +15,8 @@ js13k.Creature = class extends EngineObject {
 	constructor( name, pos, size, tileIndex, tileSize ) {
 		super( pos, size, tileIndex, tileSize || tileSizeDefault, 0 );
 
+		this._animTimerIdle = new Timer( randInt( 5, 1 ) );
 		this._overlay = null;
-		this._animationOffset = randInt( 1000, 0 );
 
 		this.name = name;
 
@@ -134,6 +134,10 @@ js13k.Creature = class extends EngineObject {
 		const timer = new Timer( duration );
 		const startPos = this.pos.copy();
 
+		let stepPos = startPos;
+		this.angle = 0.1;
+		this.mirror = endX < this.pos.x;
+
 		// Function is called with each main update until "cbEnd" is called.
 		return cbEnd => {
 			// Smooth the animation with a slow start and end.
@@ -143,7 +147,15 @@ js13k.Creature = class extends EngineObject {
 			this.pos.x = startPos.x * ( 1 - progress ) + endX * progress;
 			this.pos.y = startPos.y * ( 1 - progress ) + endY * progress;
 
+			const distanceWalked = stepPos.distance( this.pos );
+
+			if( distanceWalked >= 0.5 ) {
+				this.angle *= -1;
+				stepPos = this.pos.copy();
+			}
+
 			if( timer.elapsed() ) {
+				this.angle = 0;
 				cbEnd();
 			}
 		};
@@ -186,7 +198,10 @@ js13k.Creature = class extends EngineObject {
 	update() {
 		this.tileIndex = 16;
 
-		if( Math.round( ( time + this._animationOffset ) * 2 ) % 4 === 0 ) {
+		if( this._animTimerIdle.elapsed() ) {
+			this._animTimerIdle.set( 3 );
+		}
+		else if( this._animTimerIdle.get() >= -1 ) {
 			this.tileIndex = 17;
 		}
 

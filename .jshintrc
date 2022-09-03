@@ -28,6 +28,7 @@
 		"overlayContext": false,
 		"paused": true,
 		"rand": false,
+		"randInt": false,
 		"setTileCollisionData": false,
 		"tileImage": false,
 		"tileSizeDefault": true,
