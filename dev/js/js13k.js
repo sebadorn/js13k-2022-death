@@ -18,6 +18,7 @@ window.addEventListener( 'load', () => {
 	// LittleJS settings
 	cameraScale = 128;
 	canvasMaxSize = vec2( 1600, 900 );
+	enablePhysicsSolver = false;
 	showWatermark = true; // TODO: disable for release
 	tileSizeDefault = vec2( 32 );
 
@@ -59,8 +60,7 @@ window.addEventListener( 'load', () => {
 				return;
 			}
 
-			js13k.TurnManager.doTurn();
-			cameraPos = js13k.currentLevel.player.pos;
+			js13k.currentLevel.update();
 		},
 
 		// before rendering, draw background effects
@@ -72,6 +72,7 @@ window.addEventListener( 'load', () => {
 				return;
 			}
 
+			js13k.currentLevel.renderAfter();
 			js13k.UI.drawHUD();
 		},
 

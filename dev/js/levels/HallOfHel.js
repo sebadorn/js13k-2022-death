@@ -58,6 +58,56 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 		js13k.TurnManager.addCreature( this.player );
 
 		this.updateTileMap();
+
+		cameraPos = this.player.pos;
+	}
+
+
+	/**
+	 * @override
+	 */
+	renderAfter() {
+		if( this.step < 3 ) {
+			drawTile( vec2( 1, 2.4 ), vec2( 4 ), 5 );
+		}
+	}
+
+
+	/**
+	 * @override
+	 */
+	update() {
+		// Intro.
+		if( this.step == 0 ) {
+			js13k.UI.showDialog(
+				'h1',
+				'Hel, Ruler of Niflheim',
+				'Pitiful souls! Once proud warriors that unfortunately passed of sickness or old age and where thus cast into my Niflheim! Rejoice, for you are granted a chance to die <s>horrib…</s> honorably and ascend into the ranks of Valhalla!',
+				() => this.step = 1
+			);
+		}
+		else if( this.step == 1 ) {
+			js13k.UI.showDialog(
+				'h2',
+				'Hel, Ruler of Niflheim',
+				'I have granted you a brittle body and weapon, so that you may fight and absorb the soul power of those slayed. Only a strong enough soul can be counted as killed in battle.',
+				() => this.step = 2
+			);
+		}
+		else if( this.step == 2 ) {
+			js13k.UI.showDialog(
+				'h3',
+				'Hel, Ruler of Niflheim',
+				'The battle begins! First fight your way out of my hall!',
+				() => this.step = 3
+			);
+		}
+
+		if( this.step < 3 ) {
+			return;
+		}
+
+		super.update();
 	}
 
 

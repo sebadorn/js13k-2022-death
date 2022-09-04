@@ -32,10 +32,10 @@ js13k.Tile = class extends EngineObject {
 		super.render();
 
 		if( this.highlightAttack ) {
-			drawTile( this.pos, vec2( 1 ), 7 );
+			drawTile( this.pos, vec2( 1 ), 11, vec2( 16 ) );
 		}
 		else if( this.highlightMove ) {
-			drawTile( this.pos, vec2( 1 ), 3 );
+			drawTile( this.pos, vec2( 1 ), 3, vec2( 16 ) );
 		}
 	}
 

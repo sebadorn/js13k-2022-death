@@ -10,6 +10,7 @@ js13k.Level = class {
 	 */
 	constructor( size ) {
 		this.size = size;
+		this.step = 0;
 
 		js13k.TurnManager.reset();
 
@@ -104,6 +105,21 @@ js13k.Level = class {
 	 */
 	getTileContent( pos ) {
 		return this._tileContentMap[pos.toString( 0 )];
+	}
+
+
+	/**
+	 *
+	 */
+	renderAfter() {}
+
+
+	/**
+	 *
+	 */
+	update() {
+		js13k.TurnManager.doTurn();
+		cameraPos = this.player.pos;
 	}
 
 
