@@ -14,7 +14,7 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 		for( let x = 0; x < this.size.x; x++ ) {
 			for( let y = 0; y < this.size.y; y++ ) {
 				const color = new Color( 0.2, 0.2, 0.25 );
-				const ground = new js13k.Tile( vec2( x, y ), color, 6, js13k.TILEDATA_GROUND );
+				const ground = new js13k.Tile( vec2( x, y ), color, 6 );
 
 				this.addTile( ground );
 			}

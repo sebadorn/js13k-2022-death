@@ -15,7 +15,6 @@ js13k.Level = class {
 		js13k.TurnManager.reset();
 
 		// Tiles
-		initTileCollision( this.size );
 		this.tiles = [...Array( this.size.x )].map( _ => [] );
 
 		this.monsters = [];
@@ -42,7 +41,6 @@ js13k.Level = class {
 	 */
 	buildObject( pos, tileIndex ) {
 		const object = new EngineObject( pos, vec2( 1 ), tileIndex );
-		object.setCollision( 0, 0, 0 );
 
 		return object;
 	}

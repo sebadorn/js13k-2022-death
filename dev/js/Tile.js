@@ -10,16 +10,12 @@ js13k.Tile = class extends EngineObject {
 	 * @param {Vector2}  pos
 	 * @param {Color}    color
 	 * @param {number}  [tileIndex = -1]
-	 * @param {number}  [tileData = 0]
 	 */
-	constructor( pos, color, tileIndex = -1, tileData = 0 ) {
+	constructor( pos, color, tileIndex = -1 ) {
 		super( pos, objectDefaultSize, tileIndex, tileSizeDefault, 0, color );
 
 		this.highlightAttack = false;
 		this.highlightMove = false;
-
-		this.setCollision( 0, 0, 0 );
-		setTileCollisionData( pos, tileData );
 	}
 
 

@@ -6,11 +6,7 @@
  */
 const js13k = {
 	currentLevel: null,
-	isGameOver: false,
-
-	TILEDATA_GROUND: -1,
-	TILEDATA_EMPTY: 0,
-	TILEDATA_BLOCK: 1
+	isGameOver: false
 };
 
 
@@ -18,7 +14,6 @@ window.addEventListener( 'load', () => {
 	// LittleJS settings
 	cameraScale = 128;
 	canvasMaxSize = vec2( 1600, 900 );
-	enablePhysicsSolver = false;
 	showWatermark = true; // TODO: disable for release
 	tileSizeDefault = vec2( 32 );
 

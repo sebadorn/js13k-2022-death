@@ -28,7 +28,7 @@ FILES=(
 	'engineDraw.js'
 	'engineInput.js'
 	'engineAudio.js'
-	'engineTileLayer.js'
+	# 'engineTileLayer.js'
 	'engineParticles.js'
 	# 'engineMedals.js'
 	'engineWebGL.js'
