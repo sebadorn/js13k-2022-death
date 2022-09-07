@@ -84,3 +84,11 @@ printf '  - ZIP size (after ECT):  %5d bytes\n' "$CURRENT_SIZE"
 printf '  ------------------------------------\n'
 printf '  Space left:              %5d bytes\n' "$FREE_SPACE"
 printf '\n'
+
+# Create/update directory for use with GitHub pages.
+if [ -d '../docs' ]; then
+	rm -rf '../docs'
+fi
+
+mkdir '../docs'
+rsync -avq ./ '../docs/' --exclude *.zip
