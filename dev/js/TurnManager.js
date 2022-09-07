@@ -22,10 +22,10 @@ js13k.TurnManager = {
 	/**
 	 *
 	 * @param  {EngineObject[]} tileContent
-	 * @return {boolean}
+	 * @return {?js13k.Creature}
 	 */
 	canAttackTile( tileContent ) {
-		return !!tileContent.find( c => c instanceof js13k.Creature );
+		return tileContent.find( c => c instanceof js13k.Creature );
 	},
 
 
@@ -48,6 +48,7 @@ js13k.TurnManager = {
 				const mouseRounded = vec2( mouseX, mouseY );
 				const distance = mouseRounded.distance( js13k.turnCreature.pos );
 				const tileContent = js13k.currentLevel.getTileContent( vec2( mouseX, mouseY ) );
+				let attackable = null;
 
 				// Show tile as possible move target.
 				if( !tileContent ) {
@@ -62,18 +63,19 @@ js13k.TurnManager = {
 					}
 				}
 				// Show tile as possible attack target.
-				else if( this.canAttackTile( tileContent ) ) {
+				/* jshint -W084 */
+				else if( attackable = this.canAttackTile( tileContent ) ) {
+				/* jshint +W084 */
 					// Check if tile is in attack distance.
-					if( distance <= js13k.turnCreature.attackRange ) {
-						const creature = tileContent.find( c => c instanceof js13k.Creature );
+					if(
+						attackable !== js13k.turnCreature &&
+						distance <= js13k.turnCreature.attackRange
+					) {
+						tile.highlightAttack = true;
 
-						if( creature !== js13k.turnCreature ) {
-							tile.highlightAttack = true;
-
-							// Attack creature on the tile.
-							if( mouseWasPressed( 0 ) ) {
-								this._turnAction = js13k.turnCreature.getTurnActionAttack( creature );
-							}
+						// Attack creature on the tile.
+						if( mouseWasPressed( 0 ) ) {
+							this._turnAction = js13k.turnCreature.getTurnActionAttack( attackable );
 						}
 					}
 				}
@@ -90,6 +92,13 @@ js13k.TurnManager = {
 	 */
 	endTurn() {
 		js13k.currentLevel.updateTileMap();
+
+		if( this.isPlayerTurn() ) {
+			if( js13k.currentLevel.checkForAndHandleEnd() ) {
+				return;
+			}
+		}
+
 		this._turnAction = null;
 
 		// If creature has no turns left for this
@@ -153,6 +162,7 @@ js13k.TurnManager = {
 	reset() {
 		this._creatures = [];
 		this._current = 0;
+		this._turnAction = null;
 	}
 
 

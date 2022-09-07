@@ -13,24 +13,53 @@ js13k.Player = class extends js13k.Creature {
 		super( 'Player', pos, vec2( 0.5 ), 16, vec2( 16 ) );
 
 		this.health = 3;
-		this.moveDistance = 5;
+		this.moveDistance = 3;
 	}
 
 
 	/**
-	 * @override
+	 * @param  {js13k.Creature} target
+	 * @return {function}
 	 */
-	update() {
-		this.tileIndex = 16;
+	getTurnActionAttack( target ) {
+		const timerPanTo = new Timer( 0.5 );
+		const timerPanBack = new Timer();
 
-		if( this._animTimerIdle.elapsed() ) {
-			this._animTimerIdle.set( 3 );
-		}
-		else if( this._animTimerIdle.get() > -0.5 ) {
-			this.tileIndex = 17;
-		}
+		let attackDone = false;
+		let startCam = this.pos;
+		let endCam = target.pos;
+		let progress = 0;
 
-		super.update();
+		return cbEnd => {
+			if( timerPanTo.elapsed() ) {
+				progress = Math.sqrt( timerPanBack.getPercent() );
+			}
+			else {
+				progress = Math.sqrt( timerPanTo.getPercent() );
+			}
+
+			if( timerPanTo.elapsed() && !attackDone ) {
+				timerPanBack.set( 0.5 );
+
+				startCam = target.pos.copy();
+				endCam = this.pos.copy();
+
+				target.health -= this.attackDamage;
+
+				if( target.health <= 0 ) {
+					target.die();
+				}
+
+				attackDone = true;
+			}
+			else if( timerPanBack.elapsed() ) {
+				cbEnd();
+				return;
+			}
+
+			cameraPos.x = startCam.x * ( 1 - progress ) + endCam.x * progress;
+			cameraPos.y = startCam.y * ( 1 - progress ) + endCam.y * progress;
+		};
 	}
 
 

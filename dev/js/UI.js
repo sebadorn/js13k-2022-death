@@ -86,9 +86,9 @@ js13k.UI = {
 			const left = ( window.innerWidth - width - 20 ) / 2;
 
 			node = this.parser.parseFromString(
-				`<div style="background:#000c;border:4px solid #fff;bottom:${bottom}px;left:${left}px;padding:10px;position:absolute;width:${width}px">` +
+				`<div style="background:#000c;border:4px solid #fff;bottom:${bottom}px;display:flex;flex-direction:column;left:${left}px;min-height:200px;padding:10px;position:absolute;width:${width}px">` +
 					`<div style="color:#c7e;font-style:italic;font-weight:600;margin:0 0 10px">${speaker}</div>` +
-					`<div>${text}</div>` +
+					`<div style="flex: 1 1">${text}</div>` +
 					'<div class="n" style="background:#fff;color:#000;font-weight:600;margin:10px 0 0;padding:10px;text-align:center">Continue</div>' +
 				'</div>',
 				'text/html'

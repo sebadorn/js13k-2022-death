@@ -14,13 +14,24 @@ js13k.Level = class {
 
 		js13k.TurnManager.reset();
 
-		// Tiles
 		this.tiles = [...Array( this.size.x )].map( _ => [] );
 
+		this.decorations = [];
 		this.monsters = [];
 		this.objects = [];
 
 		this._tileContentMap = {};
+	}
+
+
+	/**
+	 *
+	 * @param {Vector2} pos
+	 */
+	addBlood( pos ) {
+		this.decorations.push(
+			new js13k.Decoration( js13k.Decoration.BLOOD, pos )
+		);
 	}
 
 
@@ -41,6 +52,7 @@ js13k.Level = class {
 	 */
 	buildObject( pos, tileIndex ) {
 		const object = new EngineObject( pos, vec2( 1 ), tileIndex );
+		object.renderOrder = pos.y + 0.5;
 
 		return object;
 	}
@@ -87,7 +99,7 @@ js13k.Level = class {
 
 			const entry = this._tileContentMap[posTest.toString( 0 )];
 
-			if( !entry ) {
+			if( !entry || ( entry instanceof js13k.Creature && entry.health <= 0 ) ) {
 				free.push( posTest );
 			}
 		} );
@@ -116,8 +128,8 @@ js13k.Level = class {
 	 *
 	 */
 	update() {
+		cameraPos = this.player.pos.copy();
 		js13k.TurnManager.doTurn();
-		cameraPos = this.player.pos;
 	}
 
 

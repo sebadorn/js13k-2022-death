@@ -16,7 +16,6 @@ js13k.Creature = class extends EngineObject {
 		super( pos, size, tileIndex, tileSize || tileSizeDefault, 0 );
 
 		this._animTimerIdle = new Timer( randInt( 5, 1 ) );
-		this._overlay = null;
 
 		this.name = name;
 
@@ -93,16 +92,16 @@ js13k.Creature = class extends EngineObject {
 
 
 	/**
-	 * @override
+	 *
 	 */
-	destroy() {
+	die() {
 		if( this._overlay ) {
 			this._overlay.remove();
 		}
 
 		js13k.TurnManager.removeCreature( this );
-
-		super.destroy();
+		js13k.currentLevel.addBlood( this.pos );
+		this.destroy();
 	}
 
 
@@ -111,14 +110,23 @@ js13k.Creature = class extends EngineObject {
 	 * @return {function}
 	 */
 	getTurnActionAttack( target ) {
+		const timer = new Timer( 0.5 );
+
+		let attackDone = false;
+
 		return cbEnd => {
-			target.health -= this.attackDamage;
+			if( !attackDone ) {
+				target.health -= this.attackDamage;
 
-			if( target.health <= 0 ) {
-				target.destroy();
+				if( target.health <= 0 ) {
+					target.die();
+				}
+
+				attackDone = true;
 			}
-
-			cbEnd();
+			else if( timer.elapsed() ) {
+				cbEnd();
+			}
 		};
 	}
 
@@ -130,7 +138,7 @@ js13k.Creature = class extends EngineObject {
 	 */
 	getTurnActionMove( endX, endY ) {
 		// Animation duration depends on length of movement.
-		const duration = this.pos.distance( vec2( endX, endY ) ) * 0.15;
+		const duration = this.pos.distance( vec2( endX, endY ) ) * 0.25;
 		const timer = new Timer( duration );
 		const startPos = this.pos.copy();
 
@@ -140,6 +148,8 @@ js13k.Creature = class extends EngineObject {
 
 		// Function is called with each main update until "cbEnd" is called.
 		return cbEnd => {
+			this.isWalking = true;
+
 			// Smooth the animation with a slow start and end.
 			// Math.sin( 0 ) == 0
 			// Math.sin( Math.PI / 2 ) == 1
@@ -154,8 +164,12 @@ js13k.Creature = class extends EngineObject {
 				stepPos = this.pos.copy();
 			}
 
+			this.renderOrder = this.pos.y;
+
 			if( timer.elapsed() ) {
 				this.angle = 0;
+				this.isWalking = false;
+
 				cbEnd();
 			}
 		};
@@ -196,13 +210,18 @@ js13k.Creature = class extends EngineObject {
 	 * @override
 	 */
 	update() {
-		this.tileIndex = 16;
-
-		if( this._animTimerIdle.elapsed() ) {
-			this._animTimerIdle.set( 3 );
+		if( this.isWalking ) {
+			this.tileIndex = 16;
 		}
-		else if( this._animTimerIdle.get() >= -1 ) {
-			this.tileIndex = 17;
+		else if( this.health > 0 ) {
+			this.tileIndex = 16;
+
+			if( this._animTimerIdle.elapsed() ) {
+				this._animTimerIdle.set( 3 );
+			}
+			else if( this._animTimerIdle.get() >= -1 ) {
+				this.tileIndex = 17;
+			}
 		}
 
 		super.update();

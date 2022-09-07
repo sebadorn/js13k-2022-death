@@ -9,11 +9,22 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 	 * @constructor
 	 */
 	constructor() {
-		super( vec2( 9, 14 ) );
+		super( vec2( 9, 15 ) );
 
 		for( let x = 0; x < this.size.x; x++ ) {
 			for( let y = 0; y < this.size.y; y++ ) {
-				const color = new Color( 0.2, 0.2, 0.25 );
+				let color = new Color( 0.2, 0.2, 0.25 );
+
+				if( y >= this.size.y - 2 ) {
+					if( x < 3 || x > 5 ) {
+						continue;
+					}
+
+					if( y === this.size.y - 1 ) {
+						color = new Color( 0.22, 0.22, 0.27 );
+					}
+				}
+
 				const ground = new js13k.Tile( vec2( x, y ), color, 6 );
 
 				this.addTile( ground );
@@ -33,11 +44,17 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 
 		this.objects.push(
 			// wall left top
+			this.buildObject( vec2( 0, 14 ), 2 ),
+			this.buildObject( vec2( 1, 14 ), 2 ),
+			this.buildObject( vec2( 2, 14 ), 2 ),
 			this.buildObject( vec2( 0, 13 ), 2 ),
 			this.buildObject( vec2( 1, 13 ), 2 ),
 			this.buildObject( vec2( 2, 13 ), 2 ),
 
 			// wall right top
+			this.buildObject( vec2( 6, 14 ), 2 ),
+			this.buildObject( vec2( 7, 14 ), 2 ),
+			this.buildObject( vec2( 8, 14 ), 2 ),
 			this.buildObject( vec2( 6, 13 ), 2 ),
 			this.buildObject( vec2( 7, 13 ), 2 ),
 			this.buildObject( vec2( 8, 13 ), 2 ),
@@ -60,6 +77,35 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 		this.updateTileMap();
 
 		cameraPos = this.player.pos;
+	}
+
+
+	/**
+	 *
+	 * @return {boolean} True if the level has ended.
+	 */
+	checkForAndHandleEnd() {
+		// Player has reached the gate.
+		if( this.player.pos.y >= this.size.y - 1 ) {
+			this.destroy();
+			js13k.currentLevel = new js13k.Level.Niflheim( this.player );
+
+			return true;
+		}
+
+		return false;
+	}
+
+
+	/**
+	 *
+	 */
+	destroy() {
+		this.decorations.forEach( d => d.destroy() );
+		this.monsters.forEach( m => m.destroy() );
+		this.objects.forEach( o => o.destroy() );
+		this.tiles.forEach( list => list.forEach( tile => tile.destroy() ) );
+		// Do not destroy the player, it will be passed to the next level.
 	}
 
 

@@ -30,6 +30,7 @@ terser \
 	'littlejs.custom.js' \
 	'js13k.js' \
 	'Creature.js' \
+	'Decoration.js' \
 	'Player.js' \
 	'Level.js' \
 		'HallOfHel.js' \
