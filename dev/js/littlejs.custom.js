@@ -10,27 +10,7 @@
 
 let showWatermark = 0;
 let godMode = 0;
-const debug = 0;
-const debugOverlay = 0;
-const debugPhysics = 0;
-const debugParticles = 0;
-const debugRaycast = 0;
-const debugGamepads = 0;
-const debugMedals = 0;
 
-// debug commands are automatically removed from the final build
-const ASSERT          = ()=> {}
-const debugInit       = ()=> {}
-const debugUpdate     = ()=> {}
-const debugRender     = ()=> {}
-const debugRect       = ()=> {}
-const debugCircle     = ()=> {}
-const debugPoint      = ()=> {}
-const debugLine       = ()=> {}
-const debugAABB       = ()=> {}
-const debugText       = ()=> {}
-const debugClear      = ()=> {}
-const debugSaveCanvas = ()=> {}
 /**
  * LittleJS Utility Classes and Functions
  * <br> - General purpose math library
@@ -245,27 +225,27 @@ class Vector2
     /** Returns a copy of this vector plus the vector passed in
      *  @param {Vector2} vector
      *  @return {Vector2} */
-    add(v) { ASSERT(v.x!=undefined); return new Vector2(this.x + v.x, this.y + v.y); }
+    add(v) { return new Vector2(this.x + v.x, this.y + v.y); }
 
     /** Returns a copy of this vector minus the vector passed in
      *  @param {Vector2} vector
      *  @return {Vector2} */
-    subtract(v) { ASSERT(v.x!=undefined); return new Vector2(this.x - v.x, this.y - v.y); }
+    subtract(v) { return new Vector2(this.x - v.x, this.y - v.y); }
 
     /** Returns a copy of this vector times the vector passed in
      *  @param {Vector2} vector
      *  @return {Vector2} */
-    multiply(v) { ASSERT(v.x!=undefined); return new Vector2(this.x * v.x, this.y * v.y); }
+    multiply(v) { return new Vector2(this.x * v.x, this.y * v.y); }
 
     /** Returns a copy of this vector divided by the vector passed in
      *  @param {Vector2} vector
      *  @return {Vector2} */
-    divide(v) { ASSERT(v.x!=undefined); return new Vector2(this.x / v.x, this.y / v.y); }
+    divide(v) { return new Vector2(this.x / v.x, this.y / v.y); }
 
     /** Returns a copy of this vector scaled by the vector passed in
      *  @param {Number} scale
      *  @return {Vector2} */
-    scale(s) { ASSERT(s.x==undefined); return new Vector2(this.x * s, this.y * s); }
+    scale(s) { return new Vector2(this.x * s, this.y * s); }
 
     /** Returns the length of this vector
      * @return {Number} */
@@ -298,12 +278,12 @@ class Vector2
     /** Returns the dot product of this and the vector passed in
      * @param {Vector2} vector
      * @return {Number} */
-    dot(v) { ASSERT(v.x!=undefined); return this.x*v.x + this.y*v.y; }
+    dot(v) { return this.x*v.x + this.y*v.y; }
 
     /** Returns the cross product of this and the vector passed in
      * @param {Vector2} vector
      * @return {Number} */
-    cross(v) { ASSERT(v.x!=undefined); return this.x*v.y - this.y*v.x; }
+    cross(v) { return this.x*v.y - this.y*v.x; }
 
     /** Returns the angle of this vector, up is angle 0
      * @return {Number} */
@@ -339,18 +319,12 @@ class Vector2
      * @param {Vector2} vector
      * @param {Number}  percent
      * @return {Vector2} */
-    lerp(v, p) { ASSERT(v.x!=undefined); return this.add(v.subtract(this).scale(clamp(p))); }
+    lerp(v, p) { return this.add(v.subtract(this).scale(clamp(p))); }
 
     /** Returns true if this vector is within the bounds of an array size passed in
      * @param {Vector2} arraySize
      * @return {Boolean} */
     arrayCheck(arraySize) { return this.x >= 0 && this.y >= 0 && this.x < arraySize.x && this.y < arraySize.y; }
-
-    /** Returns this vector expressed as a string
-     * @param {float} digits - precision to display
-     * @return {String} */
-    toString(digits=3)
-    { return `(${(this.x<0?'':' ') + this.x.toFixed(digits)},${(this.y<0?'':' ') + this.y.toFixed(digits)} )`; }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -485,19 +459,10 @@ class Color
         ).clamp();
     }
 
-    /** Returns this color expressed as an CSS color value
-     * @return {String} */
-    toString()
-    {
-        ASSERT(this.r>=0 && this.r<=1 && this.g>=0 && this.g<=1 && this.b>=0 && this.b<=1 && this.a>=0 && this.a<=1);
-        return `rgb(${this.r*255|0},${this.g*255|0},${this.b*255|0},${this.a})`;
-    }
-
     /** Returns this color expressed as 32 bit integer RGBA value
      * @return {Number} */
     rgbaInt()
     {
-        ASSERT(this.r>=0 && this.r<=1 && this.g>=0 && this.g<=1 && this.b>=0 && this.b<=1 && this.a>=0 && this.a<=1);
         return (this.r*255|0) + (this.g*255<<8) + (this.b*255<<16) + (this.a*255<<24);
     }
 
@@ -511,7 +476,6 @@ class Color
         this.g = fromHex(3),
         this.b = fromHex(5);
         this.a = 1;
-        ASSERT(this.r>=0 && this.r<=1 && this.g>=0 && this.g<=1 && this.b>=0 && this.b<=1);
         return this;
     }
 
@@ -567,10 +531,6 @@ class Timer
     /** Get percentage elapsed based on time it was set to, returns 0 if not set
      * @return {Number} */
     getPercent() { return this.isSet()? percent(this.time - time, this.setTime, 0) : 0; }
-
-    /** Returns this timer expressed as a string
-     * @return {String} */
-    toString() { if (debug) { return this.unset() ? 'unset' : Math.abs(this.get()) + ' seconds ' + (this.get()<0 ? 'before' : 'after' ); } }
 }
 /**
  * LittleJS Engine Settings
@@ -599,11 +559,6 @@ let canvasFixedSize = vec2();
  *  @default
  *  @memberof Settings */
 let cavasPixelated = 1;
-
-/** Default font used for text rendering
- *  @default
- *  @memberof Settings */
-let fontDefault = 'arial';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Tile sheet settings
@@ -733,33 +688,6 @@ let soundDefaultRange = 30;
  *  @memberof Settings */
 let soundDefaultTaper = .7;
 
-///////////////////////////////////////////////////////////////////////////////
-// Medals settings
-
-/** How long to show medals for in seconds
- *  @default
- *  @memberof Settings */
-let medalDisplayTime = 5;
-
-/** How quickly to slide on/off medals in seconds
- *  @default
- *  @memberof Settings */
-let medalDisplaySlideTime = .5;
-
-/** Width of medal display
- *  @default
- *  @memberof Settings */
-let medalDisplayWidth = 640;
-
-/** Height of medal display
- *  @default
- *  @memberof Settings */
-let medalDisplayHeight = 80;
-
-/** Size of icon in medal display
- *  @default
- *  @memberof Settings */
-let medalDisplayIconSize = 50;
 /*
     LittleJS - The Tiny JavaScript Game Engine That Can!
     MIT License - Copyright 2021 Frank Force
@@ -840,7 +768,6 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
     {
         // save tile image info
         tileImageFixBleed = vec2(tileFixBleedScale).divide(tileImageSize = vec2(tileImage.width, tileImage.height));
-        debug && (tileImage.onload=()=>ASSERT(1)); // tile sheet can not reloaded
 
         // setup html
         document.body.style = styleBody;
@@ -849,7 +776,6 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
         mainCanvas.style = styleCanvas;
 
         // init stuff and start engine
-        debugInit();
         glInit();
 
         // create overlay canvas for hud to appear above gl canvas
@@ -868,10 +794,9 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
         // update time keeping
         let frameTimeDeltaMS = frameTimeMS - frameTimeLastMS;
         frameTimeLastMS = frameTimeMS;
-        if (debug || showWatermark)
+        if (showWatermark)
             averageFPS = lerp(.05, averageFPS || 0, 1e3/(frameTimeDeltaMS||1));
-        if (debug)
-            frameTimeDeltaMS *= keyIsDown(107) ? 5 : keyIsDown(109) ? .2 : 1; // +/- to speed/slow time
+
         timeReal += frameTimeDeltaMS / 1e3;
         frameTimeBufferMS = min(frameTimeBufferMS + !paused * frameTimeDeltaMS, 50); // clamp incase of slow framerate
 
@@ -906,7 +831,6 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
         {
             // do post update even when paused
             inputUpdate();
-            debugUpdate();
             gameUpdatePost();
             inputUpdatePost();
         }
@@ -930,7 +854,6 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
                 engineObjectsUpdate();
 
                 // do post update
-                debugUpdate();
                 gameUpdatePost();
                 inputUpdatePost();
             }
@@ -946,9 +869,7 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
         for (const o of engineObjects)
             o.destroyed || o.render();
         gameRenderPost();
-        medalsRender();
         touchGamepadRender();
-        debugRender();
         glCopyToContext(mainContext);
 
         if (showWatermark)
@@ -1092,7 +1013,6 @@ class EngineObject
     constructor(pos=vec2(), size=objectDefaultSize, tileIndex=-1, tileSize=tileSizeDefault, angle=0, color, renderOrder=0)
     {
         // set passed in params
-        ASSERT(pos && pos.x != undefined && size.x != undefined); // ensure pos and size are vec2s
 
         /** @property {Vector2} - World space position of the object */
         this.pos = pos.copy();
@@ -1169,7 +1089,6 @@ class EngineObject
      *  @param {Number}       [localAngle=0] */
     addChild(child, localPos=vec2(), localAngle=0)
     {
-        ASSERT(!child.parent && !this.children.includes(child));
         this.children.push(child);
         child.parent = this;
         child.localPos = localPos.copy();
@@ -1180,7 +1099,6 @@ class EngineObject
      *  @param {EngineObject} child */
     removeChild(child)
     {
-        ASSERT(child.parent == this && this.children.includes(child));
         this.children.splice(this.children.indexOf(child), 1);
         child.parent = 0;
     }
@@ -1246,7 +1164,6 @@ let mainCanvasSize = vec2();
  *  @memberof Draw */
 const screenToWorld = (screenPos)=>
 {
-    ASSERT(mainCanvasSize.x && mainCanvasSize.y, 'mainCanvasSize is invalid');
     return screenPos.add(vec2(.5)).subtract(mainCanvasSize.scale(.5)).multiply(vec2(1/cameraScale,-1/cameraScale)).add(cameraPos);
 }
 
@@ -1257,7 +1174,6 @@ const screenToWorld = (screenPos)=>
  *  @memberof Draw */
 const worldToScreen = (worldPos)=>
 {
-    ASSERT(mainCanvasSize.x && mainCanvasSize.y, 'mainCanvasSize is invalid');
     return worldPos.subtract(cameraPos).multiply(vec2(cameraScale,-cameraScale)).add(mainCanvasSize.scale(.5)).subtract(vec2(.5));
 }
 
@@ -1408,142 +1324,6 @@ function setBlendMode(additive, useWebGL=glEnable)
         glSetBlendMode(additive);
     else
         mainContext.globalCompositeOperation = additive ? 'lighter' : 'source-over';
-}
-
-/** Draw text on overlay canvas in screen space
- *  Automatically splits new lines into rows
- *  @param {String}  text
- *  @param {Vector2} pos
- *  @param {Number}  [size=1]
- *  @param {Color}   [color=new Color(1,1,1)]
- *  @param {Number}  [lineWidth=0]
- *  @param {Color}   [lineColor=new Color(0,0,0)]
- *  @param {String}  [textAlign='center']
- *  @memberof Draw */
-function drawTextScreen(text, pos, size=1, color=new Color, lineWidth=0, lineColor=new Color(0,0,0), textAlign='center', font=fontDefault)
-{
-    overlayContext.fillStyle = color;
-    overlayContext.lineWidth = lineWidth;
-    overlayContext.strokeStyle = lineColor;
-    overlayContext.textAlign = textAlign;
-    overlayContext.font = size + 'px '+ font;
-    overlayContext.textBaseline = 'middle';
-    overlayContext.lineJoin = 'round';
-
-    pos = pos.copy();
-    (text+'').split('\n').forEach(line=>
-    {
-        lineWidth && overlayContext.strokeText(line, pos.x, pos.y);
-        overlayContext.fillText(line, pos.x, pos.y);
-        pos.y += size;
-    });
-}
-
-/** Draw text on overlay canvas in world space
- *  Automatically splits new lines into rows
- *  @param {String}  text
- *  @param {Vector2} pos
- *  @param {Number}  [size=1]
- *  @param {Color}   [color=new Color(1,1,1)]
- *  @param {Number}  [lineWidth=0]
- *  @param {Color}   [lineColor=new Color(0,0,0)]
- *  @param {String}  [textAlign='center']
- *  @memberof Draw */
-function drawText(text, pos, size=1, color, lineWidth, lineColor, textAlign, font)
-{
-    drawTextScreen(text, worldToScreen(pos), size*cameraScale, color, lineWidth*cameraScale, lineColor, textAlign, font);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-/**
- * Font Image Object - Draw text on a 2D canvas by using characters in an image
- * <br> - 96 characters (from space to tilde) are stored in an image
- * <br> - Uses a default 8x8 font if none is supplied
- * <br> - You can also use fonts from the main tile sheet
- * @example
- * // use built in font
- * const font = new ImageFont;
- *
- * // draw text
- * font.drawTextScreen("LittleJS\nHello World!", vec2(200, 50));
- */
-
-let engineFontImage;
-
-class FontImage
-{
-    /** Create an image font
-     *  @param {Image}   [image] - The image the font is stored in, if undefined the default font is used
-     *  @param {Vector2} [tileSize=vec2(8)] - The size of the font source tiles
-     *  @param {Vector2} [paddingSize=vec2(0,1)] - How much extra space to add between characters
-     *  @param {Number}  [startTileIndex=0] - Tile index in image where font starts
-     *  @param {CanvasRenderingContext2D} [context=overlayContext] - context to draw to
-     */
-    constructor(image, tileSize=vec2(8), paddingSize=vec2(0,1), startTileIndex=0, context=overlayContext)
-    {
-        if (!image && !engineFontImage)
-        {
-            // load default font image
-            engineFontImage = new Image();
-            engineFontImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAAYAQAAAAA9+x6JAAAAAnRSTlMAAHaTzTgAAAGiSURBVHjaZZABhxxBEIUf6ECLBdFY+Q0PMNgf0yCgsSAGZcT9sgIPtBWwIA5wgAPEoHUyJeeSlW+gjK+fegWwtROWpVQEyWh2npdpBmTUFVhb29RINgLIukoXr5LIAvYQ5ve+1FqWEMqNKTX3FAJHyQDRZvmKWubAACcv5z5Gtg2oyCWE+Yk/8JZQX1jTTCpKAFGIgza+dJCNBF2UskRlsgwitHbSV0QLgt9sTPtsRlvJjEr8C/FARWA2bJ/TtJ7lko34dNDn6usJUMzuErP89UUBJbWeozrwLLncXczd508deAjLWipLO4Q5XGPcJvPu92cNDaN0P5G1FL0nSOzddZOrJ6rNhbXGmeDvO3TF7DeJWl4bvaYQTNHCTeuqKZmbjHaSOFes+IX/+IhHrnAkXOAsfn24EM68XieIECoccD4KZLk/odiwzeo2rovYdhvb2HYFgyznJyDpYJdYOmfXgVdJTaUi4xA2uWYNYec9BLeqdl9EsoTw582mSFDX2DxVLbNt9U3YYoeatBad1c2Tj8t2akrjaIGJNywKB/7h75/gN3vCMSaadIUTAAAAAElFTkSuQmCC';
-        }
-
-        this.image = image || engineFontImage;
-        this.tileSize = tileSize;
-        this.paddingSize = paddingSize;
-        this.startTileIndex = startTileIndex;
-        this.context = context;
-    }
-
-    /** Draw text in screen space using the image font
-     *  @param {String}  text
-     *  @param {Vector2} pos
-     *  @param {Number}  [scale=4]
-     *  @param {Boolean} [center]
-     */
-    drawTextScreen(text, pos, scale=4, center)
-    {
-        const context = this.context;
-        context.save();
-        context.imageSmoothingEnabled = !cavasPixelated;
-
-        const size = this.tileSize;
-        const drawSize = size.add(this.paddingSize).scale(scale);
-        const cols = this.image.width / this.tileSize.x |0;
-        text.split('\n').forEach((line, i)=>
-        {
-            const centerOffset = center ? line.length * size.x * scale / 2 |0 : 0;
-            for(let j=line.length; j--;)
-            {
-                // draw each character
-                let charCode = line[j].charCodeAt();
-                if (charCode < 32 || charCode > 127)
-                    charCode = 127; // unknown character
-
-                // get the character source location and draw it
-                const tile = this.startTileIndex + charCode - 32;
-                const x = tile % cols;
-                const y = tile / cols |0;
-                const drawPos = pos.add(vec2(j,i).multiply(drawSize));
-                context.drawImage(this.image, x * size.x, y * size.y, size.x, size.y,
-                    drawPos.x - centerOffset, drawPos.y, size.x * scale, size.y * scale);
-            }
-        });
-
-        context.restore();
-    }
-
-    /** Draw text in world space using the image font
-     *  @param {String}  text
-     *  @param {Vector2} pos
-     *  @param {Number}  [scale=.25]
-     *  @param {Boolean} [center]
-     */
-    drawText(text, pos, scale=1, center)
-    {
-        this.drawTextScreen(text, worldToScreen(pos).floor(), scale*cameraScale|0, center);
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1710,13 +1490,11 @@ function inputUpdatePost()
 
 onkeydown = (e)=>
 {
-    if (debug && e.target != document.body) return;
     e.repeat || (inputData[isUsingGamepad = 0][remapKeyCode(e.keyCode)] = 3);
     preventDefaultInput && e.preventDefault();
 }
 onkeyup = (e)=>
 {
-    if (debug && e.target != document.body) return;
     inputData[0][remapKeyCode(e.keyCode)] = 4;
 }
 const remapKeyCode = (c)=> inputWASDEmulateDirection ? c==87?38 : c==83?40 : c==65?37 : c==68?39 : c : c;
@@ -1762,7 +1540,7 @@ function gamepadsUpdate()
         }
     }
 
-    if (!gamepadsEnable || !navigator.getGamepads || !document.hasFocus() && !debug)
+    if (!gamepadsEnable || !navigator.getGamepads || !document.hasFocus())
         return;
 
     // poll gamepads
@@ -2619,8 +2397,6 @@ class ParticleEmitter extends EngineObject
         }
         else
             this.destroy();
-
-        debugParticles && debugRect(this.pos, vec2(this.emitSize), '#0f0', 0, this.angle);
     }
 
     /** Spawn one particle
@@ -2726,7 +2502,6 @@ class Particle extends EngineObject
         else
             drawTile(this.pos, size, this.tileIndex, this.tileSize, color, this.angle, this.mirror);
         this.additive && setBlendMode();
-        debugParticles && debugRect(this.pos, size, '#f005', 0, this.angle);
 
         if (p == 1)
         {
@@ -2868,9 +2643,6 @@ function glCompileShader(source, type)
     glContext.shaderSource(shader, source);
     glContext.compileShader(shader);
 
-    // check for errors
-    if (debug && !glContext.getShaderParameter(shader, gl_COMPILE_STATUS))
-        throw glContext.getShaderInfoLog(shader);
     return shader;
 }
 
@@ -2889,9 +2661,6 @@ function glCreateProgram(vsSource, fsSource)
     glContext.attachShader(program, glCompileShader(fsSource, gl_FRAGMENT_SHADER));
     glContext.linkProgram(program);
 
-    // check for errors
-    if (debug && !glContext.getProgramParameter(program, gl_LINK_STATUS))
-        throw glContext.getProgramInfoLog(program);
     return program;
 }
 
@@ -3090,5 +2859,3 @@ gl_VERTICES_PER_QUAD = 6,
 gl_INDICIES_PER_VERT = 6,
 gl_MAX_BATCH = 1<<16,
 gl_VERTEX_BYTE_STRIDE = (4 * 2) * 2 + (4) * 2; // vec2 * 2 + (char * 4) * 2
-
-function medalsRender() {}
