@@ -17,10 +17,13 @@ window.addEventListener( 'load', () => {
 	showWatermark = true; // TODO: disable for release
 	tileSizeDefault = vec2( 32 );
 
+	js13k.UI.init();
+
 	engineInit(
 		// init/setup
 		() => {
-			js13k.currentLevel = new js13k.Level.HallOfHel();
+			// js13k.currentLevel = new js13k.Level.HallOfHel();
+			js13k.currentLevel = new js13k.Level.Niflheim( new js13k.Player() );
 			js13k.turnCreature = js13k.TurnManager.get();
 		},
 
@@ -33,7 +36,7 @@ window.addEventListener( 'load', () => {
 			const player = js13k.currentLevel.player;
 
 			if( player ) {
-				if( player.health <= 0 ) {
+				if( player.soulPower <= 0 ) {
 					js13k.isGameOver = true;
 					js13k.UI.showGameOver();
 				}

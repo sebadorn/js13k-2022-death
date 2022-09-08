@@ -1,12 +1,14 @@
 'use strict';
 
 
+/**
+ * @namespace js13k.UI
+ */
 js13k.UI = {
 
 
 	parser: new DOMParser(),
 
-	_gameOverScreen: null,
 	_node: {},
 
 
@@ -14,13 +16,13 @@ js13k.UI = {
 	 * Draw the fixed positioned UI overlay.
 	 */
 	drawHUD() {
-		overlayContext.imageSmoothingEnabled = false;
-
 		const player = js13k.currentLevel.player;
 
 		if( player ) {
-			// Draw health indicators.
-			for( let i = 0; i < player.health; i++ ) {
+			overlayContext.imageSmoothingEnabled = false;
+
+			// Draw soul power indicators.
+			for( let i = 0; i < player.soulPower; i++ ) {
 				overlayContext.drawImage(
 					tileImage,
 					// source
@@ -29,6 +31,9 @@ js13k.UI = {
 					16 + i * 42, 16, 32, 32
 				);
 			}
+
+			// Update "end turn" button.
+			this._buttonEndTurn.disabled = !js13k.TurnManager.isPlayerTurn();
 		}
 	},
 
@@ -48,6 +53,27 @@ js13k.UI = {
 		this.updateNode( node, { pos: pos } );
 
 		return node;
+	},
+
+
+	/**
+	 *
+	 */
+	init() {
+		const button = this.parser.parseFromString(
+			'<button style="position:absolute;left:45%;top:20px;z-index:1">End Turn</button>',
+			'text/html'
+		).body.firstChild;
+
+		document.body.append( button );
+
+		button.onclick = () => {
+			js13k.turnCreature.hasMoveLeft = false;
+			js13k.turnCreature.hasAttackLeft = false;
+			js13k.TurnManager.endTurn();
+		};
+
+		this._buttonEndTurn = button;
 	},
 
 

@@ -25,7 +25,17 @@ js13k.TurnManager = {
 	 * @return {?js13k.Creature}
 	 */
 	canAttackTile( tileContent ) {
-		return tileContent.find( c => c instanceof js13k.Creature );
+		return tileContent && tileContent.find( c => c instanceof js13k.Creature );
+	},
+
+
+	/**
+	 *
+	 * @param  {?EngineObject[]} tileContent
+	 * @return {boolean}
+	 */
+	canMoveToTile( tileContent ) {
+		return !tileContent || !tileContent.find( c => c.type !== js13k.Decoration.FOG );
 	},
 
 
@@ -34,7 +44,7 @@ js13k.TurnManager = {
 	 */
 	doTurn() {
 		if( this._turnAction ) {
-			this._turnAction( this.endTurn.bind( this ) );
+			this._turnAction( _ => this.endTurn() );
 			return;
 		}
 
@@ -51,7 +61,7 @@ js13k.TurnManager = {
 				let attackable = null;
 
 				// Show tile as possible move target.
-				if( !tileContent ) {
+				if( js13k.turnCreature.hasMoveLeft && this.canMoveToTile( tileContent ) ) {
 					// Check if tile is in move distance.
 					if( distance <= js13k.turnCreature.moveDistance ) {
 						tile.highlightMove = true;
@@ -59,13 +69,17 @@ js13k.TurnManager = {
 						// Move to tile.
 						if( mouseWasPressed( 0 ) ) {
 							this._turnAction = js13k.turnCreature.getTurnActionMove( mouseX, mouseY );
+							js13k.turnCreature.hasMoveLeft = false;
 						}
 					}
 				}
 				// Show tile as possible attack target.
-				/* jshint -W084 */
-				else if( attackable = this.canAttackTile( tileContent ) ) {
-				/* jshint +W084 */
+				else if(
+					js13k.turnCreature.hasAttackLeft &&
+					/* jshint -W084 */
+					( attackable = this.canAttackTile( tileContent ) )
+					/* jshint +W084 */
+				) {
 					// Check if tile is in attack distance.
 					if(
 						attackable !== js13k.turnCreature &&
@@ -76,6 +90,7 @@ js13k.TurnManager = {
 						// Attack creature on the tile.
 						if( mouseWasPressed( 0 ) ) {
 							this._turnAction = js13k.turnCreature.getTurnActionAttack( attackable );
+							js13k.turnCreature.hasAttackLeft = false;
 						}
 					}
 				}
@@ -83,6 +98,14 @@ js13k.TurnManager = {
 		}
 		else if( js13k.turnCreature ) {
 			this._turnAction = js13k.turnCreature.decideOnTurnAction();
+
+			// Creature could not find a suitable action. End turn.
+			if( !this._turnAction ) {
+				js13k.turnCreature.hasAttackLeft = false;
+				js13k.turnCreature.hasMoveLeft = false;
+
+				this.endTurn();
+			}
 		}
 	},
 
@@ -101,10 +124,14 @@ js13k.TurnManager = {
 
 		this._turnAction = null;
 
-		// If creature has no turns left for this
+		// If creature has no action left for this
 		// round, continue to next creature.
-		if( --js13k.turnCreature.turnMoves <= 0 ) {
-			js13k.turnCreature.turnMoves = js13k.turnCreature.defaultNumTurnMoves;
+		if(
+			!js13k.turnCreature.hasMoveLeft &&
+			!js13k.turnCreature.hasAttackLeft
+		) {
+			js13k.turnCreature.hasMoveLeft = true;
+			js13k.turnCreature.hasAttackLeft = true;
 			js13k.turnCreature = this.next();
 		}
 	},
@@ -150,6 +177,11 @@ js13k.TurnManager = {
 
 			if( entry === creature ) {
 				this._creatures.splice( i, 1 );
+
+				if( i <= this._current ) {
+					this._current--;
+				}
+
 				break;
 			}
 		}

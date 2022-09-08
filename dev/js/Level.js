@@ -37,15 +37,6 @@ js13k.Level = class {
 
 	/**
 	 *
-	 * @param {js13k.Ground} tile
-	 */
-	addTile( tile ) {
-		this.tiles[tile.pos.x][tile.pos.y] = tile;
-	}
-
-
-	/**
-	 *
 	 * @param  {Vector2} pos
 	 * @param  {number}  tileIndex
 	 * @return {EngineObject}
@@ -59,62 +50,12 @@ js13k.Level = class {
 
 
 	/**
-	 * @param  {Vector2} pos
-	 * @return {boolean}
-	 */
-	canTileBeMovedTo( pos ) {
-		// Tile is free if there is no entry in the tile content map.
-		return !this.getTileContent( pos );
-	}
-
-
-	/**
-	 *
-	 * @param  {Vector2} pos
-	 * @return {Vector2[]}
-	 */
-	getFreeSurroundingTiles( pos ) {
-		const directions = [];
-
-		for( let i = -1; i <= 1; i++ ) {
-			for( let j = -1; j <= 1; j++ ) {
-				if( i !== 0 && j !== 0 ) {
-					directions.push( vec2( i, j ) );
-				}
-			}
-		}
-
-		const free = [];
-
-		directions.forEach( direction => {
-			const posTest = pos.add( direction );
-
-			// Do not leave the map.
-			if(
-				posTest.x < 0 || posTest.x >= this.size.x ||
-				posTest.y < 0 || posTest.y >= this.size.y
-			) {
-				return;
-			}
-
-			const entry = this._tileContentMap[posTest.toString( 0 )];
-
-			if( !entry || ( entry instanceof js13k.Creature && entry.health <= 0 ) ) {
-				free.push( posTest );
-			}
-		} );
-
-		return free;
-	}
-
-
-	/**
 	 *
 	 * @param  {Vector2} pos
 	 * @return {?EngineObject[]}
 	 */
 	getTileContent( pos ) {
-		return this._tileContentMap[pos.toString( 0 )];
+		return this._tileContentMap[pos.toString()];
 	}
 
 
@@ -144,7 +85,7 @@ js13k.Level = class {
 				return;
 			}
 
-			const key = entry.pos.toString( 0 );
+			const key = entry.pos.toString();
 			this._tileContentMap[key] = this._tileContentMap[key] || [];
 			this._tileContentMap[key].push( entry );
 		};

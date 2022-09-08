@@ -20,7 +20,6 @@ let godMode = 0;
  * @namespace Utilities
  */
 
-'use strict';
 
 /** A shortcut to get Math.PI
  *  @const
@@ -325,6 +324,12 @@ class Vector2
      * @param {Vector2} arraySize
      * @return {Boolean} */
     arrayCheck(arraySize) { return this.x >= 0 && this.y >= 0 && this.x < arraySize.x && this.y < arraySize.y; }
+
+    /** Returns this vector expressed as a string
+     * @return {String} */
+    toString()
+    { return `(${(this.x<0?'':' ') + this.x.toFixed(0)},${(this.y<0?'':' ') + this.y.toFixed(0)} )`; }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -374,20 +379,11 @@ class Color
      * @return {Color} */
     multiply(c) { return new Color(this.r*c.r, this.g*c.g, this.b*c.b, this.a*c.a); }
 
-    /** Returns a copy of this color divided by the color passed in
-     * @param {Color} color
-     * @return {Color} */
-    divide(c) { return new Color(this.r/c.r, this.g/c.g, this.b/c.b, this.a/c.a); }
-
     /** Returns a copy of this color scaled by the value passed in, alpha can be scaled separately
      * @param {Number} scale
      * @param {Number} [alphaScale=scale]
      * @return {Color} */
     scale(s, a=s) { return new Color(this.r*s, this.g*s, this.b*s, this.a*a); }
-
-    /** Returns a copy of this color clamped to the valid range between 0 and 1
-     * @return {Color} */
-    clamp() { return new Color(clamp(this.r), clamp(this.g), clamp(this.b), clamp(this.a)); }
 
     /** Returns a new color that is p percent between this and the color passed in
      * @param {Color}  color
@@ -395,96 +391,11 @@ class Color
      * @return {Color} */
     lerp(c, p) { return this.add(c.subtract(this).scale(clamp(p))); }
 
-    /** Sets this color given a hue, saturation, lightness, and alpha
-     * @param {Number} [hue=0]
-     * @param {Number} [saturation=0]
-     * @param {Number} [lightness=1]
-     * @param {Number} [alpha=1]
-     * @return {Color} */
-    setHSLA(h=0, s=0, l=1, a=1)
-    {
-        const q = l < .5 ? l*(1+s) : l+s-l*s, p = 2*l-q,
-            f = (p, q, t)=>
-                (t = ((t%1)+1)%1) < 1/6 ? p+(q-p)*6*t :
-                t < 1/2 ? q :
-                t < 2/3 ? p+(q-p)*(2/3-t)*6 : p;
-
-        this.r = f(p, q, h + 1/3);
-        this.g = f(p, q, h);
-        this.b = f(p, q, h - 1/3);
-        this.a = a;
-        return this;
-    }
-
-    /** Returns this color expressed in hsla format
-     * @return {Array} */
-    getHSLA()
-    {
-        const r = this.r;
-        const g = this.g;
-        const b = this.b;
-        const a = this.a;
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        const l = (max + min) / 2;
-
-        let h = 0, s = 0;
-        if (max != min)
-        {
-            let d = max - min;
-            s = l > .5 ? d / (2 - max - min) : d / (max + min);
-            if (r == max)
-                h = (g - b) / d + (g < b ? 6 : 0);
-            else if (g == max)
-                h = (b - r) / d + 2;
-            else if (b == max)
-                h =  (r - g) / d + 4;
-        }
-
-        return [h / 6, s, l, a];
-    }
-
-    /** Returns a new color that has each component randomly adjusted
-     * @param {Number} [amount=.05]
-     * @param {Number} [alphaAmount=0]
-     * @return {Color} */
-    mutate(amount=.05, alphaAmount=0)
-    {
-        return new Color
-        (
-            this.r + rand(amount, -amount),
-            this.g + rand(amount, -amount),
-            this.b + rand(amount, -amount),
-            this.a + rand(alphaAmount, -alphaAmount)
-        ).clamp();
-    }
-
     /** Returns this color expressed as 32 bit integer RGBA value
      * @return {Number} */
     rgbaInt()
     {
         return (this.r*255|0) + (this.g*255<<8) + (this.b*255<<16) + (this.a*255<<24);
-    }
-
-    /** Set this color from a hex code
-     * @param {String} hex - html hex code
-     * @return {Color} */
-    setHex(hex)
-    {
-        const fromHex = (a)=> parseInt(hex.slice(a,a+2), 16)/255;
-        this.r = fromHex(1);
-        this.g = fromHex(3),
-        this.b = fromHex(5);
-        this.a = 1;
-        return this;
-    }
-
-    /** Returns this color expressed as a hex code
-     * @return {String} */
-    getHex()
-    {
-        const toHex = (c)=> ((c=c*255|0)<16 ? '0' : '') + c.toString(16);
-        return '#' + toHex(this.r) + toHex(this.g) + toHex(this.b);
     }
 }
 
@@ -537,7 +448,6 @@ class Timer
  * @namespace Settings
  */
 
-'use strict';
 
 ///////////////////////////////////////////////////////////////////////////////
 // Display settings
@@ -706,7 +616,6 @@ let soundDefaultTaper = .7;
     - Call engineInit() to start it up!
 */
 
-'use strict';
 
 /** Name of engine */
 const engineName = 'LittleJS';
@@ -972,7 +881,6 @@ function engineObjectsCallback(pos, size, callbackFunction, objects=engineObject
     LittleJS Object System
 */
 
-'use strict';
 
 /**
  * LittleJS Object Base Object Class
@@ -1125,7 +1033,6 @@ class EngineObject
  * @namespace Draw
  */
 
-'use strict';
 
 /** Tile sheet for batch rendering system
  *  @type {Image}
@@ -1362,7 +1269,6 @@ function toggleFullscreen()
  * @namespace Input
  */
 
-'use strict';
 
 /** Returns true if device key is down
  *  @param {Number} key
@@ -1773,7 +1679,6 @@ function touchGamepadRender()
  * <br> - Speech synthesis wrapper functions
  */
 
-'use strict';
 
 /**
  * Sound Object - Stores a zzfx sound for later use and can be played positionally
@@ -2239,7 +2144,6 @@ function zzfxM(instruments, patterns, sequence, BPM = 125)
     - Fast particle rendering
 */
 
-'use strict';
 
 /**
  * Particle Emitter - Spawns particles with the given settings
@@ -2524,7 +2428,6 @@ class Particle extends EngineObject
  * @namespace WebGL
  */
 
-'use strict';
 
 /** The WebGL canvas which appears above the main canvas and below the overlay canvas
  *  @type {HTMLCanvasElement}

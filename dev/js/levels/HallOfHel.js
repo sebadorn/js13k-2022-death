@@ -11,6 +11,7 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 	constructor() {
 		super( vec2( 9, 15 ) );
 
+		// Ground tiles
 		for( let x = 0; x < this.size.x; x++ ) {
 			for( let y = 0; y < this.size.y; y++ ) {
 				let color = new Color( 0.2, 0.2, 0.25 );
@@ -27,9 +28,13 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 
 				const ground = new js13k.Tile( vec2( x, y ), color, 6 );
 
-				this.addTile( ground );
+				this.tiles[ground.pos.x][ground.pos.y] = ground;
 			}
 		}
+
+		// Player
+		this.player = new js13k.Player( vec2( 4, 4 ) );
+		js13k.TurnManager.addCreature( this.player );
 
 		const monsterPosList = [
 			vec2( 5, 6 ),
@@ -37,7 +42,7 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 		];
 
 		monsterPosList.forEach( pos => {
-			const monster = new js13k.Creature( 'Warrior', pos, vec2( 0.5 ), 16, vec2( 16 ) );
+			const monster = new js13k.Creature( js13k.Creature.DOG, pos, vec2( 0.5 ) );
 			this.monsters.push( monster );
 			js13k.TurnManager.addCreature( monster );
 		} );
@@ -69,10 +74,6 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 			this.buildObject( vec2( 2, 1.25 ), 0 ),
 			this.buildObject( vec2( 6, 1.25 ), 0 )
 		);
-
-		// Player
-		this.player = new js13k.Player( vec2( 4, 4 ) );
-		js13k.TurnManager.addCreature( this.player );
 
 		this.updateTileMap();
 
@@ -128,7 +129,7 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 			js13k.UI.showDialog(
 				'h1',
 				'Hel, Ruler of Niflheim',
-				'Pitiful souls! Once proud warriors that unfortunately passed of sickness or old age and where thus cast into my Niflheim! Rejoice, for you are granted a chance to die <s>horrib…</s> honorably and ascend into the ranks of Valhalla!',
+				'Pitiful soul! Once proud warrior that unfortunately passed of sickness or old age and where thus cast into my Niflheim! Rejoice, for you are granted a chance to die honorably and ascend into the ranks of Valhalla!',
 				() => this.step = 1
 			);
 		}
@@ -136,7 +137,7 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 			js13k.UI.showDialog(
 				'h2',
 				'Hel, Ruler of Niflheim',
-				'I have granted you a brittle body and weapon, so that you may fight and absorb the soul power of those slayed. Only a strong enough soul can be counted as killed in battle.',
+				'I have granted you a brittle body and weapon, so that you may fight and absorb the soul power of those slayed.',
 				() => this.step = 2
 			);
 		}
@@ -144,7 +145,7 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 			js13k.UI.showDialog(
 				'h3',
 				'Hel, Ruler of Niflheim',
-				'The battle begins! First fight your way out of my hall!',
+				'The trial begins! First fight your way out of my hall!',
 				() => this.step = 3
 			);
 		}

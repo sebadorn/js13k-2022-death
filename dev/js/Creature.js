@@ -7,27 +7,63 @@ js13k.Creature = class extends EngineObject {
 	/**
 	 * @constructor
 	 * @override
-	 * @param {string}  name
+	 * @param {number}  type
 	 * @param {Vector2} pos
 	 * @param {Vector2} size
 	 * @param {number}  tileIndex
 	 */
-	constructor( name, pos, size, tileIndex, tileSize ) {
+	constructor( type, pos, size, tileIndex, tileSize ) {
 		super( pos, size, tileIndex, tileSize || tileSizeDefault, 0 );
 
 		this._animTimerIdle = new Timer( randInt( 5, 1 ) );
 
-		this.name = name;
+		this.type = type;
 
-		this.health = 1;
-		this.moveDistance = 1;
-		this.viewRange = 5;
+		const map = [];
+		map[js13k.Creature.DOG] = [
+			1, // soulPower
+			2, // moveDistance
+			4, // viewRange
+			1, // attackDamage
+			1, // attackRange
+			24, // tileIndex
+			0, // tileSize
+		];
+		map[js13k.Creature.SNAKE] = [
+			1, // soulPower
+			1, // moveDistance
+			3, // viewRange
+			1, // attackDamage
+			1, // attackRange
+			25, // tileIndex
+			0, // tileSize
+		];
+		map[js13k.Creature.GIANT] = [
+			2, // soulPower
+			2, // moveDistance
+			4, // viewRange
+			2, // attackDamage
+			2, // attackRange
+			8, // tileIndex
+			tileSizeDefault, // tileSize
+		];
 
-		this.defaultNumTurnMoves = 1;
-		this.turnMoves = this.defaultNumTurnMoves;
+		const values = map[type];
 
-		this.attackDamage = 1;
-		this.attackRange = 1.5;
+		if( values ) {
+			this.soulPower = values[0];
+			this.moveDistance = values[1];
+			this.viewRange = values[2];
+			this.attackDamage = values[3];
+			this.attackRange = values[4] + 0.5;
+
+			this._tileIndexDefault = values[5];
+			this.tileIndex = values[5];
+			this.tileSize = values[6] || vec2( 16 );
+		}
+
+		this.hasMoveLeft = true;
+		this.hasAttackLeft = true;
 	}
 
 
@@ -37,54 +73,49 @@ js13k.Creature = class extends EngineObject {
 	decideOnTurnAction() {
 		let action = null;
 
-		const level = js13k.currentLevel;
-		const player = level.player;
+		const player = js13k.currentLevel.player;
 		const distance = this.pos.distance( player.pos );
 
 		// Player is within view range.
 		if( distance <= this.viewRange ) {
-			// Player is also within attack range.
-			if( distance <= this.attackRange ) {
-				action = this.getTurnActionAttack( player );
-			}
-			// Move towards player.
-			else {
-				let normedDirection = player.pos.subtract( this.pos ).normalize();
-				let step = min( this.moveDistance, distance );
-				let target = null;
+			const tileContent = js13k.currentLevel.getTileContent( player.pos );
+			const playerIsHidden = tileContent && tileContent.find( c => c.type === js13k.Decoration.FOG );
 
-				// Check if target tile is free. If not free try to find
-				// a free tile on the path there. Only relevant for
-				// creatures if a moveDistance >= 2.
-				while( step >= 1 ) {
-					target = this.pos.add( normedDirection.scale( step ) );
-					target.x = Math.round( clamp( target.x, 0, level.size.x - 1 ) );
-					target.y = Math.round( clamp( target.y, 0, level.size.y - 1 ) );
+			if( !playerIsHidden ) {
+				// Player is also within attack range.
+				if( this.hasAttackLeft && distance <= this.attackRange ) {
+					action = this.getTurnActionAttack( player );
+					this.hasAttackLeft = false;
+				}
+				// Move towards player.
+				else if( this.hasMoveLeft ) {
+					let normedDirection = player.pos.subtract( this.pos ).normalize();
+					let step = min( this.moveDistance, distance );
+					let target = null;
 
-					if( level.canTileBeMovedTo( target ) ) {
-						break;
+					// Check if target tile is free. If not free try to find
+					// a free tile on the path there. Only relevant for
+					// creatures if a moveDistance >= 2.
+					while( step >= 1 ) {
+						target = this.pos.add( normedDirection.scale( step ) );
+						target.x = Math.round( clamp( target.x, 0, js13k.currentLevel.size.x - 1 ) );
+						target.y = Math.round( clamp( target.y, 0, js13k.currentLevel.size.y - 1 ) );
+
+						// Tile cannot be moved to if not empty.
+						if( !js13k.currentLevel.getTileContent( target ) ) {
+							break;
+						}
+
+						step--;
 					}
 
-					step--;
+					if( step >= 1 ) {
+						action = this.getTurnActionMove( target.x, target.y );
+					}
+
+					this.hasMoveLeft = false;
 				}
-
-				if( step < 1 ) {
-					target = this.pos;
-				}
-
-				action = this.getTurnActionMove( target.x, target.y );
 			}
-		}
-		// Nothing to do. Move 1 tile in a random direction or just stand still.
-		else {
-			let target = this.pos;
-			const free = level.getFreeSurroundingTiles( this.pos );
-
-			if( free.length > 0 ) {
-				target = free[Math.round( rand( free.length - 1, 0 ) )];
-			}
-
-			action = this.getTurnActionMove( target.x, target.y );
 		}
 
 		return action;
@@ -116,9 +147,9 @@ js13k.Creature = class extends EngineObject {
 
 		return cbEnd => {
 			if( !attackDone ) {
-				target.health -= this.attackDamage;
+				target.soulPower -= this.attackDamage;
 
-				if( target.health <= 0 ) {
+				if( target.soulPower <= 0 ) {
 					target.die();
 				}
 
@@ -170,6 +201,11 @@ js13k.Creature = class extends EngineObject {
 				this.angle = 0;
 				this.isWalking = false;
 
+				// Moving costs soul power for the player.
+				if( this === js13k.currentLevel.player ) {
+					this.soulPower--;
+				}
+
 				cbEnd();
 			}
 		};
@@ -180,25 +216,34 @@ js13k.Creature = class extends EngineObject {
 	 * @override
 	 */
 	render() {
-		if( !paused && this !== js13k.currentLevel.player ) {
-			if(
-				abs( mousePos.x - this.pos.x ) < this.size.x / 2 &&
-				abs( mousePos.y - this.pos.y ) < this.size.y / 2
-			) {
-				const pos = worldToScreen( this.pos );
-				pos.x += ( window.innerWidth - parseInt( mainCanvas.width, 10 ) ) / 2;
-				pos.y += ( window.innerHeight - parseInt( mainCanvas.height, 10 ) ) / 2;
+		if( !paused ) {
+			if( this !== js13k.currentLevel.player ) {
+				// Hide if in fog.
+				const tileContent = js13k.currentLevel.getTileContent( this.pos );
 
-				if( !this._overlay ) {
-					this._overlay = js13k.UI.hoverBoxCreature( this.name, pos );
+				if( tileContent && tileContent.find( c => c.type === js13k.Decoration.FOG ) ) {
+					return;
 				}
-				else {
-					this._overlay.hidden = false;
-					js13k.UI.updateNode( this._overlay, { pos: pos } );
+
+				if(
+					abs( mousePos.x - this.pos.x ) < this.size.x / 2 &&
+					abs( mousePos.y - this.pos.y ) < this.size.y / 2
+				) {
+					// const pos = worldToScreen( this.pos );
+					// pos.x += ( window.innerWidth - parseInt( mainCanvas.width, 10 ) ) / 2;
+					// pos.y += ( window.innerHeight - parseInt( mainCanvas.height, 10 ) ) / 2;
+
+					// if( !this._overlay ) {
+					// 	this._overlay = js13k.UI.hoverBoxCreature( this.name, pos );
+					// }
+					// else {
+					// 	this._overlay.hidden = false;
+					// 	js13k.UI.updateNode( this._overlay, { pos: pos } );
+					// }
 				}
-			}
-			else if( this._overlay ) {
-				this._overlay.hidden = true;
+				// else if( this._overlay ) {
+				// 	this._overlay.hidden = true;
+				// }
 			}
 		}
 
@@ -210,17 +255,19 @@ js13k.Creature = class extends EngineObject {
 	 * @override
 	 */
 	update() {
-		if( this.isWalking ) {
-			this.tileIndex = 16;
-		}
-		else if( this.health > 0 ) {
-			this.tileIndex = 16;
-
-			if( this._animTimerIdle.elapsed() ) {
-				this._animTimerIdle.set( 3 );
+		if( this.type === js13k.Creature.DOG ) {
+			if( this.isWalking ) {
+				this.tileIndex = this._tileIndexDefault;
 			}
-			else if( this._animTimerIdle.get() >= -1 ) {
-				this.tileIndex = 17;
+			else if( this.soulPower > 0 ) {
+				this.tileIndex = this._tileIndexDefault;
+
+				if( this._animTimerIdle.elapsed() ) {
+					this._animTimerIdle.set( 2.5 );
+				}
+				else if( this._animTimerIdle.get() >= -0.2 ) {
+					this.tileIndex = this._tileIndexDefault + 1;
+				}
 			}
 		}
 
@@ -229,3 +276,8 @@ js13k.Creature = class extends EngineObject {
 
 
 };
+
+
+js13k.Creature.DOG = 1;
+js13k.Creature.SNAKE = 2;
+js13k.Creature.GIANT = 3;

@@ -16,6 +16,7 @@ js13k.Tile = class extends EngineObject {
 
 		this.highlightAttack = false;
 		this.highlightMove = false;
+		this.renderOrder = -1;
 	}
 
 

@@ -33,7 +33,8 @@ js13k.Decoration = class extends EngineObject {
 		}
 		else if( this.type === js13k.Decoration.FOG ) {
 			let pos = this.pos.copy();
-			pos.x += Math.sin( time ) * 0.1;
+			pos.x += Math.sin( time ) * 0.05;
+			pos.y += Math.cos( this.spawnTime + time ) * 0.02;
 
 			drawTile( pos, vec2( 1 ), 3 );
 		}
