@@ -10,6 +10,180 @@ js13k.TurnManager = {
 
 
 	/**
+	 *
+	 * @private
+	 */
+	_handlePlayerTurn() {
+		let cursor = '';
+		const mouseX = Math.round( mousePos.x );
+		const mouseY = Math.round( mousePos.y );
+
+		const tile = js13k.currentLevel.tiles[mouseX]?.[mouseY];
+		const player = js13k.turnCreature;
+
+		if( tile ) {
+			const mouseRounded = vec2( mouseX, mouseY );
+			const distance = mouseRounded.distance( player.pos );
+			const tileContent = js13k.currentLevel.getTileContent( vec2( mouseX, mouseY ) );
+			let attackable = null;
+
+			// Show tile as possible move target.
+			if( player.movesLeft && this.canMoveToTile( player, tile, tileContent ) ) {
+				// Check if tile is in move distance.
+				if( distance <= player.movesLeft ) {
+					tile.highlightMove = true;
+					cursor = 'pointer';
+
+					// Move to tile.
+					if( mouseWasPressed( 0 ) ) {
+						this._turnAction = player.getTurnActionMove( mouseX, mouseY );
+						player.movesLeft -= Math.round( distance * 10 ) / 10;
+
+						if( player.movesLeft < 1 ) {
+							player.movesLeft = 0;
+						}
+					}
+				}
+			}
+			// Show tile as possible attack target.
+			else if(
+				player.attacksLeft &&
+				/* jshint -W084 */
+				( attackable = this.canAttackTile( tileContent ) )
+				/* jshint +W084 */
+			) {
+				// Check if tile is in attack distance.
+				if(
+					attackable !== player &&
+					distance <= player.attackRange
+				) {
+					let attackables = null;
+
+					// Second better check if target is really attackable.
+					// Relevant for attacks with range > 1.
+					if(
+						/* jshint -W084 */
+						( attackables = this._highlightTilesForAttack( tile, player, attackable ) )
+						/* jshint +W084 */
+					) {
+						cursor = 'crosshair';
+
+						// Attack creature on the tile.
+						if( mouseWasPressed( 0 ) ) {
+							this._turnAction = player.getTurnActionAttack( attackables );
+							player.attacksLeft--;
+						}
+					}
+				}
+			}
+		}
+
+		js13k.UI.setCursor( cursor );
+	},
+
+
+	/**
+	 *
+	 * @private
+	 * @param  {js13k.Tile}     tile     - The currently selected tile.
+	 * @param  {js13k.Player}   player
+	 * @param  {js13k.Creature} creature
+	 * @return {?(js13k.Creature|js13k.Creature[])}
+	 */
+	_highlightTilesForAttack( tile, player, creature ) {
+		let attackables = [creature];
+
+		const pos = player.pos.copy();
+		pos.x = Math.round( pos.x );
+		pos.y = Math.round( pos.y );
+
+		// Whirlwind: Highlight all tiles around the player.
+		if( player.attackType == 1 ) {
+			const tiles = [
+				vec2( pos.x + 1, pos.y + 1 ),
+				vec2( pos.x + 1, pos.y - 1 ),
+				vec2( pos.x + 1, pos.y ),
+				vec2( pos.x - 1, pos.y + 1 ),
+				vec2( pos.x - 1, pos.y - 1 ),
+				vec2( pos.x - 1, pos.y ),
+				vec2( pos.x, pos.y + 1 ),
+				vec2( pos.x, pos.y - 1 ),
+			];
+
+			tiles.forEach( tPos => {
+				const t = js13k.currentLevel.tiles[tPos.x]?.[tPos.y];
+
+				if( t ) {
+					t.highlightAttack = true;
+
+					const tileContent = js13k.currentLevel.getTileContent( tPos );
+
+					if( tileContent ) {
+						const tileCreature = tileContent.find( c => c instanceof js13k.Creature );
+
+						if( tileCreature && !attackables.includes( tileCreature ) ) {
+							attackables.push( tileCreature );
+						}
+					}
+				}
+			} );
+		}
+		// Throw: Highlight all tiles from the player to the target.
+		else if( player.attackType == 2 ) {
+			const tiles = [];
+
+			const normedDirection = tile.pos.subtract( player.pos ).normalize();
+			let distance = player.pos.distance( tile.pos );
+
+			const checkContent = o => {
+				return !( o instanceof js13k.Creature || o instanceof js13k.Decoration );
+			};
+
+			while( distance >= 1 ) {
+				const target = pos.add( normedDirection.scale( distance ) );
+				target.x = Math.round( target.x );
+				target.y = Math.round( target.y );
+
+				const t = js13k.currentLevel.tiles[target.x]?.[target.y];
+
+				if( t ) {
+					const tileContent = js13k.currentLevel.getTileContent( target );
+
+					// Something is in the way.
+					if( tileContent ) {
+						if( tileContent.find( checkContent ) ) {
+							return null;
+						}
+
+						const tileCreature = tileContent.find( c => c instanceof js13k.Creature );
+
+						if( tileCreature && !attackables.includes( tileCreature ) ) {
+							attackables.push( tileCreature );
+						}
+					}
+
+					tiles.push( t );
+				}
+				else {
+					return null;
+				}
+
+				distance--;
+			}
+
+			tiles.forEach( t => t.highlightAttack = true );
+		}
+		else {
+			attackables = creature;
+		}
+
+		tile.highlightAttack = true;
+
+		return attackables;
+	},
+
+
+	/**
 	 * Add a creature to the turn list.
 	 * It will be added at the end.
 	 * @param {js13k.Creature} creature
@@ -31,11 +205,32 @@ js13k.TurnManager = {
 
 	/**
 	 *
+	 * @param  {js13k.Creature}  player
+	 * @param  {js13k.Tile}      tile
 	 * @param  {?EngineObject[]} tileContent
 	 * @return {boolean}
 	 */
-	canMoveToTile( tileContent ) {
-		return !tileContent || !tileContent.find( c => c.type !== js13k.Decoration.FOG );
+	canMoveToTile( player, tile, tileContent ) {
+		const normedDirection = player.pos.subtract( tile.pos ).normalize();
+		let distance = tile.pos.distance( player.pos );
+
+		while( distance >= 1 ) {
+			const target = tile.pos.add( normedDirection.scale( distance ) );
+			target.x = Math.round( target.x );
+			target.y = Math.round( target.y );
+
+			// Tile cannot be moved to if not empty.
+			if(
+				( target.x !== player.pos.x || target.y !== player.pos.y ) &&
+				js13k.currentLevel.getTileContent( target )
+			) {
+				return false;
+			}
+
+			distance--;
+		}
+
+		return !tileContent;
 	},
 
 
@@ -49,60 +244,15 @@ js13k.TurnManager = {
 		}
 
 		if( this.isPlayerTurn() ) {
-			const mouseX = Math.round( mousePos.x );
-			const mouseY = Math.round( mousePos.y );
-
-			const tile = js13k.currentLevel.tiles[mouseX]?.[mouseY];
-
-			if( tile ) {
-				const mouseRounded = vec2( mouseX, mouseY );
-				const distance = mouseRounded.distance( js13k.turnCreature.pos );
-				const tileContent = js13k.currentLevel.getTileContent( vec2( mouseX, mouseY ) );
-				let attackable = null;
-
-				// Show tile as possible move target.
-				if( js13k.turnCreature.hasMoveLeft && this.canMoveToTile( tileContent ) ) {
-					// Check if tile is in move distance.
-					if( distance <= js13k.turnCreature.moveDistance ) {
-						tile.highlightMove = true;
-
-						// Move to tile.
-						if( mouseWasPressed( 0 ) ) {
-							this._turnAction = js13k.turnCreature.getTurnActionMove( mouseX, mouseY );
-							js13k.turnCreature.hasMoveLeft = false;
-						}
-					}
-				}
-				// Show tile as possible attack target.
-				else if(
-					js13k.turnCreature.hasAttackLeft &&
-					/* jshint -W084 */
-					( attackable = this.canAttackTile( tileContent ) )
-					/* jshint +W084 */
-				) {
-					// Check if tile is in attack distance.
-					if(
-						attackable !== js13k.turnCreature &&
-						distance <= js13k.turnCreature.attackRange
-					) {
-						tile.highlightAttack = true;
-
-						// Attack creature on the tile.
-						if( mouseWasPressed( 0 ) ) {
-							this._turnAction = js13k.turnCreature.getTurnActionAttack( attackable );
-							js13k.turnCreature.hasAttackLeft = false;
-						}
-					}
-				}
-			}
+			this._handlePlayerTurn();
 		}
 		else if( js13k.turnCreature ) {
 			this._turnAction = js13k.turnCreature.decideOnTurnAction();
 
 			// Creature could not find a suitable action. End turn.
 			if( !this._turnAction ) {
-				js13k.turnCreature.hasAttackLeft = false;
-				js13k.turnCreature.hasMoveLeft = false;
+				js13k.turnCreature.attacksLeft = 0;
+				js13k.turnCreature.movesLeft = 0;
 
 				this.endTurn();
 			}
@@ -127,11 +277,11 @@ js13k.TurnManager = {
 		// If creature has no action left for this
 		// round, continue to next creature.
 		if(
-			!js13k.turnCreature.hasMoveLeft &&
-			!js13k.turnCreature.hasAttackLeft
+			!js13k.turnCreature.movesLeft &&
+			!js13k.turnCreature.attacksLeft
 		) {
-			js13k.turnCreature.hasMoveLeft = true;
-			js13k.turnCreature.hasAttackLeft = true;
+			js13k.turnCreature.movesLeft = js13k.turnCreature.moveDistance;
+			js13k.turnCreature.attacksLeft = 1;
 			js13k.turnCreature = this.next();
 		}
 	},

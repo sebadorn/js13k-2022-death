@@ -12,60 +12,122 @@ js13k.Player = class extends js13k.Creature {
 	constructor( pos ) {
 		super( 0, pos, vec2( 0.5 ), 16, vec2( 16 ) );
 
-		this.soulPower = 5;
+		this.soulPower = 100;
 		this.moveDistance = 3;
-
-		this.attackDamage = 1;
-		this.attackRange = 1.5;
+		this.movesLeft = this.moveDistance;
+		this.setAttack( 0 );
 	}
 
 
 	/**
-	 * @param  {js13k.Creature} target
+	 *
+	 * @private
+	 * @param  {js13k.Creature[]} targets
 	 * @return {function}
 	 */
-	getTurnActionAttack( target ) {
-		const timerPanTo = new Timer( 0.3 );
-		const timerPanBack = new Timer();
+	_getTurnActionAttackThrow( targets ) {
+		// Sort targets so it starts with the closer one.
+		targets.sort( ( a, b ) => a.pos.distance( this.pos ) - b.pos.distance( this.pos ) );
+		const lastTarget = targets[targets.length - 1];
 
-		let attackDone = false;
-		let startCam = this.pos;
-		let endCam = target.pos;
-		let progress = 0;
+		const duration = this.pos.distance( lastTarget.pos ) * 0.2;
+		const timer = new Timer( duration );
+
+		const hatchet = new EngineObject( vec2( 0 ), vec2( 0.5 ), 2, vec2( 16 ) );
+		hatchet.mirror = targets[0].pos.x < this.pos.x;
 
 		return cbEnd => {
-			if( timerPanTo.elapsed() ) {
-				progress = Math.sqrt( timerPanBack.getPercent() );
+			if( timer.elapsed() ) {
+				targets.forEach( ( target, i ) => {
+					// Each hit reduces the damage further.
+					target.soulPower -= max( this.attackDamage - i * 2, 0 );
+
+					if( target.soulPower <= 0 ) {
+						target.die();
+
+						// Destroying an enemy increases soul power.
+						this.soulPower += target.soulPowerTotal;
+					}
+				} );
+
+				this.soulPower -= this.attackCost;
+
+				hatchet.destroy();
+				cbEnd();
 			}
 			else {
-				progress = Math.sqrt( timerPanTo.getPercent() );
+				const progress = timer.getPercent();
+				hatchet.angle = progress * Math.PI * 4;
+				hatchet.pos.x = lastTarget.pos.x * progress + this.pos.x * ( 1 - progress );
+				hatchet.pos.y = lastTarget.pos.y * progress + this.pos.y * ( 1 - progress );
 			}
+		};
+	}
 
-			if( timerPanTo.elapsed() && !attackDone ) {
-				timerPanBack.set( 0.3 );
 
-				startCam = target.pos.copy();
-				endCam = this.pos.copy();
+	/**
+	 *
+	 * @private
+	 * @param  {js13k.Creature[]} targets
+	 * @return {function}
+	 */
+	_getTurnActionAttackWhirlwind( targets ) {
+		// TODO: animation
 
+		return cbEnd => {
+			targets.forEach( target => {
 				target.soulPower -= this.attackDamage;
 
 				if( target.soulPower <= 0 ) {
 					target.die();
 
 					// Destroying an enemy increases soul power.
-					this.soulPower++;
+					this.soulPower += target.soulPowerTotal;
 				}
+			} );
 
-				attackDone = true;
-			}
-			else if( timerPanBack.elapsed() ) {
-				cbEnd();
-				return;
-			}
+			this.soulPower -= this.attackCost;
 
-			cameraPos.x = startCam.x * ( 1 - progress ) + endCam.x * progress;
-			cameraPos.y = startCam.y * ( 1 - progress ) + endCam.y * progress;
+			cbEnd();
 		};
+	}
+
+
+	/**
+	 *
+	 * @override
+	 * @param  {js13k.Creature|js13k.Creature[]} targets
+	 * @return {function}
+	 */
+	getTurnActionAttack( targets ) {
+		if( this.attackType == 1 ) {
+			return this._getTurnActionAttackWhirlwind( targets );
+		}
+		else if( this.attackType == 2 ) {
+			return this._getTurnActionAttackThrow( targets );
+		}
+
+		return this._getTurnActionAttackNormal( targets );
+	}
+
+
+	/**
+	 *
+	 * @param {number} type
+	 */
+	setAttack( type ) {
+		const list = [
+			[10, 1.5, 0], // normal attack
+			[10, 1.5, 10], // whirlwind attack
+			[10, 4.5, 10], // hatchet throw
+		];
+
+		const attack = list[type];
+
+		this.attackType = type;
+		this.attackDamage = attack[0];
+		this.attackRange = attack[1];
+		this.attackCost = attack[2];
 	}
 
 

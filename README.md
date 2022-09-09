@@ -1,4 +1,4 @@
-# js13k 2022
+# js13k 2022: Hel's Trial
 
 Entry for the [js13k competition of 2022](https://2022.js13kgames.com/).  
 Theme: **DEATH**
@@ -7,6 +7,12 @@ Theme: **DEATH**
 ## Description
 
 _[tbd]_
+
+
+## Controls
+
+* Mouse to select tiles and press buttons
+* Escape to pause/unpause
 
 
 Best performance in Chromium-based browsers.

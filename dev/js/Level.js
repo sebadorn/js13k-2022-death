@@ -42,7 +42,7 @@ js13k.Level = class {
 	 * @return {EngineObject}
 	 */
 	buildObject( pos, tileIndex ) {
-		const object = new EngineObject( pos, vec2( 1 ), tileIndex );
+		const object = new EngineObject( pos, objectDefaultSize, tileIndex );
 		object.renderOrder = pos.y + 0.5;
 
 		return object;

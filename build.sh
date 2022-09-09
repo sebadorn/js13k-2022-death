@@ -34,7 +34,6 @@ terser \
 	'Player.js' \
 	'Level.js' \
 		'HallOfHel.js' \
-		'Niflheim.js' \
 	'Tile.js' \
 	'TurnManager.js' \
 	'UI.js' \

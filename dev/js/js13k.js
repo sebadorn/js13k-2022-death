@@ -14,7 +14,7 @@ window.addEventListener( 'load', () => {
 	// LittleJS settings
 	cameraScale = 128;
 	canvasMaxSize = vec2( 1600, 900 );
-	showWatermark = true; // TODO: disable for release
+	showWatermark = true; // TODO: disable/remove for release
 	tileSizeDefault = vec2( 32 );
 
 	js13k.UI.init();
@@ -22,8 +22,7 @@ window.addEventListener( 'load', () => {
 	engineInit(
 		// init/setup
 		() => {
-			// js13k.currentLevel = new js13k.Level.HallOfHel();
-			js13k.currentLevel = new js13k.Level.Niflheim( new js13k.Player() );
+			js13k.currentLevel = new js13k.Level.HallOfHel();
 			js13k.turnCreature = js13k.TurnManager.get();
 		},
 
@@ -32,6 +31,15 @@ window.addEventListener( 'load', () => {
 			if( js13k.isGameOver ) {
 				return;
 			}
+
+			if( mouseWheel < 0 ) {
+				cameraScale -= 32;
+			}
+			else if( mouseWheel > 0 ) {
+				cameraScale += 32;
+			}
+
+			cameraScale = clamp( cameraScale, 96, 256 );
 
 			const player = js13k.currentLevel.player;
 

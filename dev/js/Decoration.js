@@ -19,7 +19,7 @@ js13k.Decoration = class extends EngineObject {
 			this.pos.y += rand( 0.1, -0.1 );
 		}
 		else if( this.type === js13k.Decoration.FOG ) {
-			this.renderOrder = pos.y;
+			this.renderOrder = pos.y + 1;
 		}
 	}
 

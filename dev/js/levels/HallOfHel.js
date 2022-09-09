@@ -9,36 +9,62 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 	 * @constructor
 	 */
 	constructor() {
-		super( vec2( 9, 15 ) );
+		super( vec2( 15, 15 ) );
 
-		// Ground tiles
-		for( let x = 0; x < this.size.x; x++ ) {
-			for( let y = 0; y < this.size.y; y++ ) {
-				let color = new Color( 0.2, 0.2, 0.25 );
+		const floorPlan =
+			'       ,       ' +
+			'       ,       ' +
+			'wwwwwww,wwwwwww' +
+			'p,,,,,p,p,,,,,p' +
+			',,,,,,,,,,,,,,,' +
+			',,    ,,,    ,,' +
+			',,wwww,,,wwww,,' +
+			',,,,,p,,,p,,,,,' +
+			',,,,,,,,,,,,,,,' +
+			',,,,,,,,,,,,,,,' +
+			'    ,p,,,p,    ' +
+			'    ,,,,,,,    ' +
+			'    ,,,,,,,    ' +
+			'    ,p,,,p,    ' +
+			'    ,,,,,,,    ';
 
-				if( y >= this.size.y - 2 ) {
-					if( x < 3 || x > 5 ) {
-						continue;
-					}
+		for( let y = 0; y < this.size.y; y++ ) {
+			for( let x = 0; x < this.size.x; x++ ) {
+				let floor = floorPlan[( this.size.y - 1 - y ) * this.size.x + x];
 
-					if( y === this.size.y - 1 ) {
-						color = new Color( 0.22, 0.22, 0.27 );
-					}
+				if( floor === ' ' ) {
+					continue;
 				}
 
-				const ground = new js13k.Tile( vec2( x, y ), color, 6 );
+				if( floor === ',' || floor === 'p' ) {
+					const s = rand( 0.005, -0.005 );
+					let color = new Color( 0.2 + s, 0.2 + s, 0.25 + s );
 
-				this.tiles[ground.pos.x][ground.pos.y] = ground;
+					const ground = new js13k.Tile( vec2( x, y ), color, 6 );
+					this.tiles[ground.pos.x][ground.pos.y] = ground;
+				}
+
+				if( floor === 'w' ) {
+					this.objects.push( this.buildObject( vec2( x, y ), 2 ) );
+				}
+				else if( floor === 'p' ) {
+					const pillar = this.buildObject( vec2( x, y + 0.25 ), 0 );
+					pillar.renderOrder = pillar.pos.y + 1.5;
+
+					this.objects.push( pillar );
+				}
 			}
 		}
 
 		// Player
-		this.player = new js13k.Player( vec2( 4, 4 ) );
+		this.player = new js13k.Player( vec2( 7, 1 ) );
 		js13k.TurnManager.addCreature( this.player );
 
+		this.decorations.push( new EngineObject( this.player.pos, vec2( 1 ), 7 ) );
+
 		const monsterPosList = [
-			vec2( 5, 6 ),
-			vec2( 3, 7 )
+			vec2( 6, 4 ),
+			vec2( 6, 5 )
 		];
 
 		monsterPosList.forEach( pos => {
@@ -46,34 +72,6 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 			this.monsters.push( monster );
 			js13k.TurnManager.addCreature( monster );
 		} );
-
-		this.objects.push(
-			// wall left top
-			this.buildObject( vec2( 0, 14 ), 2 ),
-			this.buildObject( vec2( 1, 14 ), 2 ),
-			this.buildObject( vec2( 2, 14 ), 2 ),
-			this.buildObject( vec2( 0, 13 ), 2 ),
-			this.buildObject( vec2( 1, 13 ), 2 ),
-			this.buildObject( vec2( 2, 13 ), 2 ),
-
-			// wall right top
-			this.buildObject( vec2( 6, 14 ), 2 ),
-			this.buildObject( vec2( 7, 14 ), 2 ),
-			this.buildObject( vec2( 8, 14 ), 2 ),
-			this.buildObject( vec2( 6, 13 ), 2 ),
-			this.buildObject( vec2( 7, 13 ), 2 ),
-			this.buildObject( vec2( 8, 13 ), 2 ),
-
-			// pillars
-			this.buildObject( vec2( 2, 10.25 ), 0 ),
-			this.buildObject( vec2( 6, 10.25 ), 0 ),
-			this.buildObject( vec2( 2, 7.25 ), 0 ),
-			this.buildObject( vec2( 6, 7.25 ), 0 ),
-			this.buildObject( vec2( 2, 4.25 ), 0 ),
-			this.buildObject( vec2( 6, 4.25 ), 0 ),
-			this.buildObject( vec2( 2, 1.25 ), 0 ),
-			this.buildObject( vec2( 6, 1.25 ), 0 )
-		);
 
 		this.updateTileMap();
 
@@ -88,8 +86,7 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 	checkForAndHandleEnd() {
 		// Player has reached the gate.
 		if( this.player.pos.y >= this.size.y - 1 ) {
-			this.destroy();
-			js13k.currentLevel = new js13k.Level.Niflheim( this.player );
+			// TODO:
 
 			return true;
 		}
@@ -106,7 +103,6 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 		this.monsters.forEach( m => m.destroy() );
 		this.objects.forEach( o => o.destroy() );
 		this.tiles.forEach( list => list.forEach( tile => tile.destroy() ) );
-		// Do not destroy the player, it will be passed to the next level.
 	}
 
 
@@ -115,8 +111,25 @@ js13k.Level.HallOfHel = class extends js13k.Level {
 	 */
 	renderAfter() {
 		if( this.step < 3 ) {
-			drawTile( vec2( 1, 2.4 ), vec2( 4 ), 5 );
+			overlayContext.imageSmoothingEnabled = false;
+			overlayContext.drawImage(
+				tileImage,
+				// source
+				32, 32,
+				32, 32,
+				// destination
+				max( Math.round( overlayCanvas.width * 0.5 - 700 ), 0 ),
+				Math.round( overlayCanvas.height * 0.5 ),
+				512, 512
+			);
 		}
+
+		const whiteAlphaColor = new Color( 1, 1, 1, 0.02 );
+		drawRect( vec2( 7, 13.25 ), vec2( 1, 2.5 ), whiteAlphaColor );
+		drawRect( vec2( 7, 13.5 ), vec2( 1, 2 ), whiteAlphaColor );
+		drawRect( vec2( 7, 13.75 ), vec2( 1, 1.5 ), whiteAlphaColor );
+		drawRect( vec2( 7, 14 ), vec2( 1, 1 ), whiteAlphaColor );
+		drawRect( vec2( 7, 14.25 ), vec2( 1, 0.5 ), whiteAlphaColor );
 	}
 
 

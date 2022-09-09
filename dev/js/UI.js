@@ -13,27 +13,28 @@ js13k.UI = {
 
 
 	/**
+	 *
+	 * @param {string} cursor
+	 */
+	setCursor( cursor ) {
+		document.body.style.cursor = cursor;
+	},
+
+
+	/**
 	 * Draw the fixed positioned UI overlay.
 	 */
 	drawHUD() {
 		const player = js13k.currentLevel.player;
 
 		if( player ) {
-			overlayContext.imageSmoothingEnabled = false;
-
-			// Draw soul power indicators.
-			for( let i = 0; i < player.soulPower; i++ ) {
-				overlayContext.drawImage(
-					tileImage,
-					// source
-					32, 0, 16, 16,
-					// destination
-					16 + i * 42, 16, 32, 32
-				);
-			}
+			overlayContext.font = '600 16px monospace';
+			overlayContext.fillStyle = '#fff';
+			overlayContext.fillText( 'SP ' + player.soulPower.toFixed( 0 ), 16, 28 );
+			overlayContext.fillText( 'MV ' + player.movesLeft.toFixed( 0 ), 16, 50 );
 
 			// Update "end turn" button.
-			this._buttonEndTurn.disabled = !js13k.TurnManager.isPlayerTurn();
+			this._buttonEndTurn.hidden = !js13k.TurnManager.isPlayerTurn();
 		}
 	},
 
@@ -65,13 +66,34 @@ js13k.UI = {
 			'text/html'
 		).body.firstChild;
 
-		document.body.append( button );
+		const attacks = this.parser.parseFromString(
+			'<div style="position:absolute;left:45%;top:60px;z-index:1">' +
+				'<button id="a0" class="a">Normal</button>' +
+				'<button id="a1">Whirlwind</button>' +
+				'<button id="a2">Throw</button>' +
+			'</div>',
+			'text/html'
+		).body.firstChild;
+
+		document.body.append( button, attacks );
 
 		button.onclick = () => {
-			js13k.turnCreature.hasMoveLeft = false;
-			js13k.turnCreature.hasAttackLeft = false;
+			js13k.turnCreature.movesLeft = 0;
+			js13k.turnCreature.attacksLeft = 0;
 			js13k.TurnManager.endTurn();
 		};
+
+		const attackButtons = [];
+
+		attacks.querySelectorAll( 'button' ).forEach( btn => {
+			attackButtons.push( btn );
+
+			btn.onclick = _ev => {
+				attackButtons.forEach( ab => ab.className = '' );
+				js13k.turnCreature.setAttack( Number( btn.id.substring( 1 ) ) );
+				btn.className = 'a';
+			};
+		} );
 
 		this._buttonEndTurn = button;
 	},
@@ -115,14 +137,14 @@ js13k.UI = {
 				`<div style="background:#000c;border:4px solid #fff;bottom:${bottom}px;display:flex;flex-direction:column;left:${left}px;min-height:200px;padding:10px;position:absolute;width:${width}px">` +
 					`<div style="color:#c7e;font-style:italic;font-weight:600;margin:0 0 10px">${speaker}</div>` +
 					`<div style="flex: 1 1">${text}</div>` +
-					'<div class="n" style="background:#fff;color:#000;font-weight:600;margin:10px 0 0;padding:10px;text-align:center">Continue</div>' +
+					'<div class="n" style="background:#fff;color:#000;cursor:pointer;font-weight:600;margin:10px 0 0;padding:10px;text-align:center">Continue</div>' +
 				'</div>',
 				'text/html'
 			).body.firstChild;
 
 			document.body.append( node );
 
-			node.querySelector( '.n' ).onclick = () => {
+			node.querySelector( '.n' ).onclick = _ev => {
 				node.remove();
 				delete this._node[id];
 				onClick();
