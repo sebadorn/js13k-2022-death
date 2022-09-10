@@ -12,6 +12,7 @@
 		"canvasMaxSize": true,
 		"clamp": false,
 		"Color": false,
+		"drawLine": false,
 		"drawRect": false,
 		"drawTile": false,
 		"engineInit": false,

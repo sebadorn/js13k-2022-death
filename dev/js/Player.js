@@ -25,9 +25,35 @@ js13k.Player = class extends js13k.Creature {
 	 * @param  {js13k.Creature[]} targets
 	 * @return {function}
 	 */
+	_getTurnActionAttackSweepingBlow( targets ) {
+		// TODO: animation
+
+		return cbEnd => {
+			targets.forEach( target => {
+				target.soulPower -= this.attackDamage;
+
+				if( target.soulPower <= 0 ) {
+					target.die();
+
+					// Destroying an enemy increases soul power.
+					this.soulPower += target.soulPowerTotal;
+				}
+			} );
+
+			this.soulPower -= this.attackCost;
+
+			cbEnd();
+		};
+	}
+
+
+	/**
+	 *
+	 * @private
+	 * @param  {js13k.Creature[]} targets
+	 * @return {function}
+	 */
 	_getTurnActionAttackThrow( targets ) {
-		// Sort targets so it starts with the closer one.
-		targets.sort( ( a, b ) => a.pos.distance( this.pos ) - b.pos.distance( this.pos ) );
 		const lastTarget = targets[targets.length - 1];
 
 		const duration = this.pos.distance( lastTarget.pos ) * 0.2;
@@ -67,41 +93,13 @@ js13k.Player = class extends js13k.Creature {
 
 	/**
 	 *
-	 * @private
-	 * @param  {js13k.Creature[]} targets
-	 * @return {function}
-	 */
-	_getTurnActionAttackWhirlwind( targets ) {
-		// TODO: animation
-
-		return cbEnd => {
-			targets.forEach( target => {
-				target.soulPower -= this.attackDamage;
-
-				if( target.soulPower <= 0 ) {
-					target.die();
-
-					// Destroying an enemy increases soul power.
-					this.soulPower += target.soulPowerTotal;
-				}
-			} );
-
-			this.soulPower -= this.attackCost;
-
-			cbEnd();
-		};
-	}
-
-
-	/**
-	 *
 	 * @override
 	 * @param  {js13k.Creature|js13k.Creature[]} targets
 	 * @return {function}
 	 */
 	getTurnActionAttack( targets ) {
 		if( this.attackType == 1 ) {
-			return this._getTurnActionAttackWhirlwind( targets );
+			return this._getTurnActionAttackSweepingBlow( targets );
 		}
 		else if( this.attackType == 2 ) {
 			return this._getTurnActionAttackThrow( targets );
@@ -118,8 +116,8 @@ js13k.Player = class extends js13k.Creature {
 	setAttack( type ) {
 		const list = [
 			[10, 1.5, 0], // normal attack
-			[10, 1.5, 10], // whirlwind attack
-			[10, 4.5, 10], // hatchet throw
+			[10, 1.5, 20], // sweeping blow
+			[8, 4.5, 20], // hatchet throw
 		];
 
 		const attack = list[type];

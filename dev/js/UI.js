@@ -7,18 +7,11 @@
 js13k.UI = {
 
 
+	isOverCanvas: false,
 	parser: new DOMParser(),
 
-	_node: {},
-
-
-	/**
-	 *
-	 * @param {string} cursor
-	 */
-	setCursor( cursor ) {
-		document.body.style.cursor = cursor;
-	},
+	_buttonEndTurn: null,
+	_dialogs: {},
 
 
 	/**
@@ -27,33 +20,55 @@ js13k.UI = {
 	drawHUD() {
 		const player = js13k.currentLevel.player;
 
-		if( player ) {
+		if( player && !paused ) {
 			overlayContext.font = '600 16px monospace';
+			overlayContext.textAlign = 'left';
+			overlayContext.textBaseline = 'top';
+
+			overlayContext.fillStyle = '#000';
+			overlayContext.fillText( 'SP ' + player.soulPower.toFixed( 0 ), 15, 29 );
 			overlayContext.fillStyle = '#fff';
 			overlayContext.fillText( 'SP ' + player.soulPower.toFixed( 0 ), 16, 28 );
+
+			overlayContext.fillStyle = '#000';
+			overlayContext.fillText( 'MV ' + player.movesLeft.toFixed( 0 ), 15, 51 );
+			overlayContext.fillStyle = '#fff';
 			overlayContext.fillText( 'MV ' + player.movesLeft.toFixed( 0 ), 16, 50 );
 
+			overlayContext.fillStyle = '#000';
+			overlayContext.fillText( '(1) Direct Attack,   0 SP', 15, 95 );
+			overlayContext.fillStyle = player.attackType == 0 ? '#f00' : '#fff';
+			overlayContext.fillText( '(1) Direct Attack,   0 SP', 16, 94 );
+
+			overlayContext.fillStyle = '#000';
+			overlayContext.fillText( '(2) Sweeping Blow, -20 SP', 15, 117 );
+			overlayContext.fillStyle = player.attackType == 1 ? '#f00' : '#fff';
+			overlayContext.fillText( '(2) Sweeping Blow, -20 SP', 16, 116 );
+
+			overlayContext.fillStyle = '#000';
+			overlayContext.fillText( '(3) Throw Hatchet, -20 SP', 15, 139 );
+			overlayContext.fillStyle = player.attackType == 2 ? '#f00' : '#fff';
+			overlayContext.fillText( '(3) Throw Hatchet, -20 SP', 16, 138 );
+
 			// Update "end turn" button.
-			this._buttonEndTurn.hidden = !js13k.TurnManager.isPlayerTurn();
+			if( this._buttonEndTurn ) {
+				this._buttonEndTurn.hidden = !js13k.TurnManager.isPlayerTurn();
+			}
+		}
+
+		if( paused && this._buttonEndTurn ) {
+			this._buttonEndTurn.hidden = true;
 		}
 	},
 
 
 	/**
-	 * @param {string}  text
-	 * @param {Vector2} pos
+	 *
 	 */
-	hoverBoxCreature( text, pos ) {
-		const node = this.parser.parseFromString(
-			`<div style="background:#000a;border:2px solid #fff;padding:10px;position:absolute;text-transform:uppercase;z-index:1">${text}</div>`,
-			'text/html'
-		).body.firstChild;
-
-		document.body.append( node );
-
-		this.updateNode( node, { pos: pos } );
-
-		return node;
+	hideAllDialog() {
+		for( const key in this._dialogs ) {
+			this._dialogs[key].style.display = 'none';
+		}
 	},
 
 
@@ -61,21 +76,30 @@ js13k.UI = {
 	 *
 	 */
 	init() {
+		document.onmouseover = ev => {
+			this.isOverCanvas = ev.target.tagName === 'CANVAS';
+		};
+
 		const button = this.parser.parseFromString(
-			'<button style="position:absolute;left:45%;top:20px;z-index:1">End Turn</button>',
+			'<button style="top:20px">End Turn</button>',
 			'text/html'
 		).body.firstChild;
 
 		const attacks = this.parser.parseFromString(
-			'<div style="position:absolute;left:45%;top:60px;z-index:1">' +
-				'<button id="a0" class="a">Normal</button>' +
-				'<button id="a1">Whirlwind</button>' +
-				'<button id="a2">Throw</button>' +
+			'<div class="b">' +
+				'<button style="top:0">(1) Direct Attack,   0 SP</button>' +
+				'<button style="top:22px">(2) Sweeping Blow, -20 SP</button>' +
+				'<button style="top:44px">(3) Throw Hatchet, -20 SP</button>' +
 			'</div>',
 			'text/html'
 		).body.firstChild;
 
 		document.body.append( button, attacks );
+
+		button.style.left = ( window.innerWidth - button.getBoundingClientRect().width ) * 0.5 + 'px';
+
+		attacks.style.left = 16 + ( window.innerWidth - mainCanvas.width ) * 0.5 + 'px';
+		attacks.style.top = 92 + ( window.innerHeight - mainCanvas.height ) * 0.5 + 'px';
 
 		button.onclick = () => {
 			js13k.turnCreature.movesLeft = 0;
@@ -83,19 +107,20 @@ js13k.UI = {
 			js13k.TurnManager.endTurn();
 		};
 
-		const attackButtons = [];
-
 		attacks.querySelectorAll( 'button' ).forEach( btn => {
-			attackButtons.push( btn );
-
-			btn.onclick = _ev => {
-				attackButtons.forEach( ab => ab.className = '' );
-				js13k.turnCreature.setAttack( Number( btn.id.substring( 1 ) ) );
-				btn.className = 'a';
-			};
+			btn.onclick = _ev => js13k.turnCreature.setAttack( Number( btn.textContent.substring( 1, 2 ) ) - 1 );
 		} );
 
 		this._buttonEndTurn = button;
+	},
+
+
+	/**
+	 *
+	 * @param {string} cursor
+	 */
+	setCursor( cursor ) {
+		document.body.style.cursor = cursor;
 	},
 
 
@@ -120,13 +145,13 @@ js13k.UI = {
 
 	/**
 	 *
-	 * @param {string}   id
+	 * @param {string}   key
 	 * @param {string}   speaker
 	 * @param {string}   text
 	 * @param {function} onClick
 	 */
-	showDialog( id, speaker, text, onClick ) {
-		let node = this._node[id];
+	showDialog( key, speaker, text, onClick ) {
+		let node = this._dialogs[key];
 
 		if( !node ) {
 			const width = min( 800, mainCanvas.width );
@@ -146,26 +171,14 @@ js13k.UI = {
 
 			node.querySelector( '.n' ).onclick = _ev => {
 				node.remove();
-				delete this._node[id];
+				delete this._dialogs[key];
 				onClick();
 			};
 
-			this._node[id] = node;
+			this._dialogs[key] = node;
 		}
-	},
-
-
-	/**
-	 *
-	 * @param {HTMLElement} node
-	 * @param {object}      data
-	 * @param {Vector2}     data.pos
-	 */
-	updateNode( node, data ) {
-		if( data.pos ) {
-			const rect = node.getBoundingClientRect();
-			node.style.left = Math.round( data.pos.x - rect.width / 2 ) + 'px';
-			node.style.top = Math.round( data.pos.y - rect.height - 48 ) + 'px';
+		else {
+			node.style.display = 'flex';
 		}
 	}
 

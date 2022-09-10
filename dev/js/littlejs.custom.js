@@ -397,6 +397,13 @@ class Color
     {
         return (this.r*255|0) + (this.g*255<<8) + (this.b*255<<16) + (this.a*255<<24);
     }
+
+    /** Returns this color expressed as an CSS color value
+     * @return {String} */
+    toString()
+    {
+        return `rgba(${this.r*255|0},${this.g*255|0},${this.b*255|0},${this.a.toFixed(3)})`;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -656,8 +663,7 @@ let frameTimeLastMS = 0, frameTimeBufferMS = 0, tileImageSize, tileImageFixBleed
 let averageFPS, drawCount;
 
 // css text used for elements created by engine
-const styleBody = 'margin:0;overflow:hidden;background:#000' +
-    ';touch-action:none;user-select:none;-webkit-user-select:none;-moz-user-select:none';
+const styleBody = 'touch-action:none;-webkit-user-select:none;-moz-user-select:none';
 const styleCanvas = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)';
 
 ///////////////////////////////////////////////////////////////////////////////

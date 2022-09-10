@@ -19,9 +19,9 @@ js13k.TurnManager = {
 		const mouseY = Math.round( mousePos.y );
 
 		const tile = js13k.currentLevel.tiles[mouseX]?.[mouseY];
-		const player = js13k.turnCreature;
 
-		if( tile ) {
+		if( tile && js13k.UI.isOverCanvas ) {
+			const player = js13k.turnCreature;
 			const mouseRounded = vec2( mouseX, mouseY );
 			const distance = mouseRounded.distance( player.pos );
 			const tileContent = js13k.currentLevel.getTileContent( vec2( mouseX, mouseY ) );
@@ -66,7 +66,7 @@ js13k.TurnManager = {
 						( attackables = this._highlightTilesForAttack( tile, player, attackable ) )
 						/* jshint +W084 */
 					) {
-						cursor = 'crosshair';
+						cursor = 'pointer';
 
 						// Attack creature on the tile.
 						if( mouseWasPressed( 0 ) ) {
@@ -97,18 +97,20 @@ js13k.TurnManager = {
 		pos.x = Math.round( pos.x );
 		pos.y = Math.round( pos.y );
 
-		// Whirlwind: Highlight all tiles around the player.
+		// Sweeping Blow: Highlight all tiles around the player.
 		if( player.attackType == 1 ) {
 			const tiles = [
 				vec2( pos.x + 1, pos.y + 1 ),
 				vec2( pos.x + 1, pos.y - 1 ),
-				vec2( pos.x + 1, pos.y ),
+				vec2( pos.x + 1, pos.y     ),
 				vec2( pos.x - 1, pos.y + 1 ),
 				vec2( pos.x - 1, pos.y - 1 ),
-				vec2( pos.x - 1, pos.y ),
-				vec2( pos.x, pos.y + 1 ),
-				vec2( pos.x, pos.y - 1 ),
+				vec2( pos.x - 1, pos.y     ),
+				vec2( pos.x,     pos.y + 1 ),
+				vec2( pos.x,     pos.y - 1 ),
 			];
+
+			attackables[0].expectedDamage = player.attackDamage;
 
 			tiles.forEach( tPos => {
 				const t = js13k.currentLevel.tiles[tPos.x]?.[tPos.y];
@@ -122,6 +124,7 @@ js13k.TurnManager = {
 						const tileCreature = tileContent.find( c => c instanceof js13k.Creature );
 
 						if( tileCreature && !attackables.includes( tileCreature ) ) {
+							tileCreature.expectedDamage = player.attackDamage;
 							attackables.push( tileCreature );
 						}
 					}
@@ -171,10 +174,18 @@ js13k.TurnManager = {
 				distance--;
 			}
 
+			// Sort targets so it starts with the closer one.
+			attackables.sort( ( a, b ) => a.pos.distance( player.pos ) - b.pos.distance( player.pos ) );
+
+			attackables.forEach( ( target, i ) => {
+				target.expectedDamage = max( player.attackDamage - i * 2, 0 );
+			} );
+
 			tiles.forEach( t => t.highlightAttack = true );
 		}
 		else {
 			attackables = creature;
+			creature.expectedDamage = player.attackDamage;
 		}
 
 		tile.highlightAttack = true;
@@ -238,6 +249,10 @@ js13k.TurnManager = {
 	 *
 	 */
 	doTurn() {
+		if( js13k.currentLevel.playOutroTimer ) {
+			return;
+		}
+
 		if( this._turnAction ) {
 			this._turnAction( _ => this.endTurn() );
 			return;
@@ -266,15 +281,16 @@ js13k.TurnManager = {
 	endTurn() {
 		js13k.currentLevel.updateTileMap();
 
-		if( this.isPlayerTurn() ) {
-			if( js13k.currentLevel.checkForAndHandleEnd() ) {
-				return;
-			}
+		if(
+			this.isPlayerTurn() &&
+			js13k.currentLevel.checkForAndHandleEnd()
+		) {
+			return;
 		}
 
 		this._turnAction = null;
 
-		// If creature has no action left for this
+		// If creature has no actions left for this
 		// round, continue to next creature.
 		if(
 			!js13k.turnCreature.movesLeft &&
