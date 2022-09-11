@@ -6,7 +6,7 @@ js13k.TurnManager = {
 
 	_creatures: [],
 	_current: 0,
-	_turnAction: null,
+	// _turnAction: null,
 
 
 	/**
@@ -37,11 +37,11 @@ js13k.TurnManager = {
 					// Move to tile.
 					if( mouseWasPressed( 0 ) ) {
 						this._turnAction = player.getTurnActionMove( mouseX, mouseY );
-						player.movesLeft -= Math.round( distance * 10 ) / 10;
+						player.movesLeft -= Math.round( distance * 2 ) / 2;
 
-						if( player.movesLeft < 1 ) {
-							player.movesLeft = 0;
-						}
+						// if( player.movesLeft < 1 ) {
+						// 	player.movesLeft = 0;
+						// }
 					}
 				}
 			}
@@ -139,7 +139,7 @@ js13k.TurnManager = {
 			let distance = player.pos.distance( tile.pos );
 
 			const checkContent = o => {
-				return !( o instanceof js13k.Creature || o instanceof js13k.Decoration );
+				return !( o instanceof js13k.Creature || o.isBlood );
 			};
 
 			while( distance >= 1 ) {
@@ -281,10 +281,15 @@ js13k.TurnManager = {
 	endTurn() {
 		js13k.currentLevel.updateTileMap();
 
-		if(
-			this.isPlayerTurn() &&
-			js13k.currentLevel.checkForAndHandleEnd()
-		) {
+		if( this.isPlayerTurn() && js13k.currentLevel.checkForAndHandleEnd() ) {
+			return;
+		}
+
+		if( js13k.currentLevel.player.soulPower <= 0 ) {
+			js13k.isGameOver = true;
+			js13k.UI.showGameOver();
+			js13k.soundDie.play();
+
 			return;
 		}
 
@@ -293,7 +298,7 @@ js13k.TurnManager = {
 		// If creature has no actions left for this
 		// round, continue to next creature.
 		if(
-			!js13k.turnCreature.movesLeft &&
+			js13k.turnCreature.movesLeft < 1 &&
 			!js13k.turnCreature.attacksLeft
 		) {
 			js13k.turnCreature.movesLeft = js13k.turnCreature.moveDistance;

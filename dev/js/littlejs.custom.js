@@ -328,7 +328,7 @@ class Vector2
     /** Returns this vector expressed as a string
      * @return {String} */
     toString()
-    { return `(${(this.x<0?'':' ') + this.x.toFixed(0)},${(this.y<0?'':' ') + this.y.toFixed(0)} )`; }
+    { return `(${(this.x<0?'':' ') + this.x.toFixed()},${(this.y<0?'':' ') + this.y.toFixed()} )`; }
 
 }
 
@@ -484,7 +484,7 @@ let cavasPixelated = 1;
  *  @type {Vector2}
  *  @default
  *  @memberof Settings */
-let tileSizeDefault = vec2(16);
+let tileSizeDefault = vec2(32);
 
 /** Prevent tile bleeding from neighbors in pixels
  *  @default
@@ -522,7 +522,7 @@ let cameraPos = vec2();
 /** Scale of camera in world space
  *  @default
  *  @memberof Settings */
-let cameraScale = max(tileSizeDefault.x, tileSizeDefault.y);
+let cameraScale = 128;
 
 ///////////////////////////////////////////////////////////////////////////////
 // WebGL settings

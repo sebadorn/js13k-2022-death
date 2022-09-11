@@ -13,7 +13,6 @@ mkdir -p 'build'
 
 cp 'dev/index-dev.html' 'build/'
 cp 'dev/js/'*.js 'build/'
-cp 'dev/js/levels/'*.js 'build/'
 cp 'dev/tiles.png' 'build/'
 
 cd 'build' > '/dev/null'
@@ -30,14 +29,11 @@ terser \
 	'littlejs.custom.js' \
 	'js13k.js' \
 	'Creature.js' \
-	'Decoration.js' \
 	'Player.js' \
 	'Level.js' \
-		'HallOfHel.js' \
 	'Tile.js' \
 	'TurnManager.js' \
 	'UI.js' \
-	'Weapon.js' \
 	--ecma 11 --warn \
 	--compress --toplevel \
 	--mangle --mangle-props \

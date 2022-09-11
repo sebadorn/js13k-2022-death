@@ -12,7 +12,9 @@ _[tbd]_
 ## Controls
 
 * Mouse to select tiles and press buttons
-* Escape to pause/unpause
+* [1]/[2]/[3] to switch between attacks
+* [E] to end your turn
+* [Escape] to pause/unpause
 
 
 Best performance in Chromium-based browsers.

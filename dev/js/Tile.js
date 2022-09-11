@@ -35,21 +35,14 @@ js13k.Tile = class extends EngineObject {
 			drawTile( this.pos, vec2( 1 ), 3, vec2( 16 ) );
 
 			const player = js13k.currentLevel.player;
-			let cost = Math.round( this.pos.distance( player.pos ) * 10 ) / 10;
-			const diff = player.movesLeft - cost;
-
-			if( diff < 1 ) {
-				cost = Math.ceil( cost );
-			}
+			const cost = Math.round( this.pos.distance( player.pos ) * 2 ) / 2;
 
 			const pos = worldToScreen( vec2( this.pos.x, this.pos.y ) );
 			overlayContext.font = '600 16px monospace';
 			overlayContext.textAlign = 'center';
 			overlayContext.textBaseline = 'middle';
-			overlayContext.fillStyle = '#0007';
-			overlayContext.fillText( -cost + ' MV', pos.x - 1, pos.y + 1 );
-			overlayContext.fillStyle = '#fff7';
-			overlayContext.fillText( -cost + ' MV', pos.x, pos.y );
+
+			js13k.UI.writeText( -cost + ' MV', pos.x, pos.y, '#fff7', '#0007', vec2( 1, -1 ) );
 		}
 	}
 

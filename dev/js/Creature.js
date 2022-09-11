@@ -15,46 +15,47 @@ js13k.Creature = class extends EngineObject {
 	constructor( type, pos, size, tileIndex, tileSize ) {
 		super( pos, size, tileIndex, tileSize || tileSizeDefault, 0 );
 
-		this._animTimerIdle = new Timer( randInt( 5, 1 ) );
+		this.rand = randInt( 5, 1 );
+		this._animTimerIdle = new Timer( this.rand );
 
 		this.type = type;
 
 		const map = [];
 		map[js13k.Creature.BEAST] = [
-			8, // soulPower
-			2, // moveDistance
-			6, // viewRange
-			1, // attackDamage
-			1, // attackRange
+			 8, // soulPower
+			 2, // moveDistance
+			 6, // viewRange
+			 3, // attackDamage
+			 1, // attackRange
 			24, // tileIndex
-			0, // tileSize
+			 0, // tileSize
 		];
 		map[js13k.Creature.SNAKE] = [
-			8, // soulPower
-			1, // moveDistance
-			5, // viewRange
-			1, // attackDamage
-			1, // attackRange
+			 8, // soulPower
+			 1, // moveDistance
+			 5, // viewRange
+			 5, // attackDamage
+			 1, // attackRange
 			25, // tileIndex
-			0, // tileSize
+			 0, // tileSize
 		];
 		map[js13k.Creature.GIANT] = [
 			20, // soulPower
-			1, // moveDistance
-			5, // viewRange
-			2, // attackDamage
-			1, // attackRange
-			8, // tileIndex
+			 1, // moveDistance
+			 5, // viewRange
+			10, // attackDamage
+			 1, // attackRange
+			 8, // tileIndex
 			tileSizeDefault, // tileSize
 		];
 		map[js13k.Creature.SOUL] = [
-			10, // soulPower
-			1, // moveDistance
+			12, // soulPower
+			 1, // moveDistance
 			20, // viewRange
-			1, // attackDamage
-			1, // attackRange
+			 2, // attackDamage
+			 1, // attackRange
 			36, // tileIndex
-			0, // tileSize
+			 0, // tileSize
 		];
 
 		const values = map[type];
@@ -101,6 +102,8 @@ js13k.Creature = class extends EngineObject {
 
 		const isPlayer = this === js13k.currentLevel.player;
 
+		this.soulPower -= this.attackCost;
+
 		return cbEnd => {
 			this.isWalking = true;
 
@@ -120,13 +123,15 @@ js13k.Creature = class extends EngineObject {
 				startPos = target.pos;
 
 				target.soulPower -= this.attackDamage;
+				isPlayer ? js13k.soundHit1.play() : js13k.soundHit2.play();
 
 				if( target.soulPower <= 0 ) {
 					target.die();
 
 					// Destroying an enemy increases soul power.
 					if( isPlayer ) {
-						this.soulPower += target.soulPowerTotal;
+						this.soulPower += 5;
+						js13k.UI.effectSP( this, 5 );
 					}
 				}
 
@@ -137,7 +142,8 @@ js13k.Creature = class extends EngineObject {
 				this.isWalking = false;
 				this.mirror = target.pos.x < origPos.x;
 				this.pos = origPos;
-				this.soulPower -= this.attackCost;
+
+				js13k.UI.effectSP( target, -this.attackDamage );
 
 				cbEnd();
 
@@ -222,10 +228,6 @@ js13k.Creature = class extends EngineObject {
 	 *
 	 */
 	die() {
-		if( this._overlay ) {
-			this._overlay.remove();
-		}
-
 		js13k.TurnManager.removeCreature( this );
 		js13k.currentLevel.addBlood( this.pos );
 		this.destroy();
@@ -302,23 +304,19 @@ js13k.Creature = class extends EngineObject {
 			) {
 				const pos = worldToScreen( vec2( currentPos.x, currentPos.y + 0.5 ) );
 				overlayContext.textBaseline = 'top';
-				overlayContext.fillStyle = '#000';
-				overlayContext.fillText( 'SP ' + this.soulPower, pos.x - 1, pos.y + 9 );
-				overlayContext.fillStyle = '#fff';
-				overlayContext.fillText( 'SP ' + this.soulPower, pos.x, pos.y + 8 );
+
+				js13k.UI.writeText( 'SP ' + this.soulPower, pos.x, pos.y + 8, '#fff', '#000', vec2( 1, -1 ) );
 			}
 
 			if( this.expectedDamage ) {
 				const pos = worldToScreen( vec2( currentPos.x, currentPos.y - 0.5 ) );
 				overlayContext.textBaseline = 'bottom';
-				overlayContext.fillStyle = '#000';
-				overlayContext.fillText( -this.expectedDamage + ' SP', pos.x - 1, pos.y + 1 );
-				overlayContext.fillStyle = '#f00';
-				overlayContext.fillText( -this.expectedDamage + ' SP', pos.x, pos.y );
+
+				js13k.UI.writeText( -this.expectedDamage + ' SP', pos.x, pos.y, '#f00', '#000', vec2( 1, -1 ) );
 			}
 
 			if( this.type === js13k.Creature.SOUL ) {
-				this.pos.y += Math.sin( time ) * 0.05;
+				this.pos.y += Math.sin( this.rand + time ) * 0.05;
 			}
 		}
 

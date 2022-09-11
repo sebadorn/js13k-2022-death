@@ -26,23 +26,43 @@ js13k.Player = class extends js13k.Creature {
 	 * @return {function}
 	 */
 	_getTurnActionAttackSweepingBlow( targets ) {
-		// TODO: animation
+		const timer = new Timer( 0.75 );
+		const swoosh = new EngineObject( this.pos, vec2( 1 ), 11 );
+		swoosh.renderOrder = engineObjects.length;
+
+		this.soulPower -= this.attackCost;
 
 		return cbEnd => {
-			targets.forEach( target => {
-				target.soulPower -= this.attackDamage;
+			if( timer.elapsed() ) {
+				let gained = 0;
 
-				if( target.soulPower <= 0 ) {
-					target.die();
+				targets.forEach( target => {
+					target.soulPower -= this.attackDamage;
+					js13k.UI.effectSP( target, -this.attackDamage );
 
-					// Destroying an enemy increases soul power.
-					this.soulPower += target.soulPowerTotal;
+					if( target.soulPower <= 0 ) {
+						target.die();
+
+						// Destroying an enemy increases soul power.
+						this.soulPower += 5;
+						gained += 5;
+					}
+				} );
+
+				if( gained > 0 ) {
+					js13k.UI.effectSP( this, gained );
 				}
-			} );
 
-			this.soulPower -= this.attackCost;
+				js13k.soundHit1.play();
 
-			cbEnd();
+				swoosh.destroy();
+				cbEnd();
+			}
+			else {
+				const progress = timer.getPercent();
+				swoosh.size = vec2( 1 + 2.5 * progress );
+				swoosh.angle = progress * Math.PI * 4;
+			}
 		};
 	}
 
@@ -62,21 +82,32 @@ js13k.Player = class extends js13k.Creature {
 		const hatchet = new EngineObject( vec2( 0 ), vec2( 0.5 ), 2, vec2( 16 ) );
 		hatchet.mirror = targets[0].pos.x < this.pos.x;
 
+		this.soulPower -= this.attackCost;
+
 		return cbEnd => {
 			if( timer.elapsed() ) {
+				let gained = 0;
+
 				targets.forEach( ( target, i ) => {
 					// Each hit reduces the damage further.
-					target.soulPower -= max( this.attackDamage - i * 2, 0 );
+					const dmg = max( this.attackDamage - i * 2, 0 );
+					target.soulPower -= dmg;
+					js13k.UI.effectSP( target, -dmg );
 
 					if( target.soulPower <= 0 ) {
 						target.die();
 
 						// Destroying an enemy increases soul power.
-						this.soulPower += target.soulPowerTotal;
+						this.soulPower += 5;
+						gained += 5;
 					}
 				} );
 
-				this.soulPower -= this.attackCost;
+				if( gained > 0 ) {
+					js13k.UI.effectSP( this, gained);
+				}
+
+				js13k.soundHit1.play();
 
 				hatchet.destroy();
 				cbEnd();
@@ -88,6 +119,14 @@ js13k.Player = class extends js13k.Creature {
 				hatchet.pos.y = lastTarget.pos.y * progress + this.pos.y * ( 1 - progress );
 			}
 		};
+	}
+
+
+	/**
+	 * @override
+	 */
+	die() {
+		// nothing
 	}
 
 
@@ -115,9 +154,10 @@ js13k.Player = class extends js13k.Creature {
 	 */
 	setAttack( type ) {
 		const list = [
-			[10, 1.5, 0], // normal attack
+			// DMG, range, cost
+			[10, 1.5,  0], // normal attack
 			[10, 1.5, 20], // sweeping blow
-			[8, 4.5, 20], // hatchet throw
+			[ 8, 4.5, 20], // hatchet throw
 		];
 
 		const attack = list[type];
