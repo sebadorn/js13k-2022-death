@@ -39,7 +39,7 @@ js13k.Creature = class extends EngineObject {
 			 6, // soulPower
 			 1, // moveDistance
 			 5, // viewRange
-			10, // attackDamage
+			 8, // attackDamage
 			 1, // attackRange
 			37, // tileIndex
 			 0, // tileSize
@@ -48,7 +48,7 @@ js13k.Creature = class extends EngineObject {
 			20, // soulPower
 			 1, // moveDistance
 			 5, // viewRange
-			12, // attackDamage
+			10, // attackDamage
 			 1, // attackRange
 			 8, // tileIndex
 			tileSizeDefault, // tileSize
