@@ -185,6 +185,8 @@ js13k.TurnManager = {
 		}
 		// Direct Attack
 		else {
+			attackables[0].expectedDamage = player.attackDamage;
+
 			const tileContent = js13k.currentLevel.getTileContent( creature.pos );
 
 			if( tileContent ) {
