@@ -35,7 +35,7 @@ js13k.Tile = class extends EngineObject {
 			drawTile( this.pos, vec2( 1 ), 3, vec2( 16 ) );
 
 			const player = js13k.currentLevel.player;
-			const cost = Math.round( this.pos.distance( player.pos ) * 2 ) / 2;
+			const cost = Math.ceil( this.pos.distance( player.pos ) );
 
 			const pos = worldToScreen( vec2( this.pos.x, this.pos.y ) );
 			overlayContext.font = '600 16px monospace';

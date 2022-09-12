@@ -30,7 +30,7 @@ js13k.Creature = class extends EngineObject {
 			 8, // soulPower
 			 2, // moveDistance
 			 6, // viewRange
-			 3, // attackDamage
+			 4, // attackDamage
 			 1, // attackRange
 			24, // tileIndex
 			 0, // tileSize
@@ -56,8 +56,8 @@ js13k.Creature = class extends EngineObject {
 		map[js13k.Creature.SOUL] = [
 			14, // soulPower
 			 1, // moveDistance
-			20, // viewRange
-			 2, // attackDamage
+			10, // viewRange
+			 3, // attackDamage
 			 1, // attackRange
 			36, // tileIndex
 			 0, // tileSize
@@ -87,20 +87,21 @@ js13k.Creature = class extends EngineObject {
 	/**
 	 *
 	 * @private
-	 * @param  {js13k.Creature} target
+	 * @param  {js13k.Creature[]} targets
 	 * @return {function}
 	 */
-	_getTurnActionAttackNormal( target ) {
+	_getTurnActionAttackNormal( targets ) {
 		const timerTo = new Timer( 0.4 );
 		const timerBack = new Timer();
+		const firstTarget = targets[0];
 
 		this.angle = 0.1;
-		this.mirror = target.pos.x < this.pos.x;
+		this.mirror = firstTarget.pos.x < this.pos.x;
 
 		const origPos = this.pos.copy();
 		let stepPos = this.pos.copy();
 		let startPos = this.pos.copy();
-		let endPos = target.pos;
+		let endPos = firstTarget.pos;
 
 		let attackDone = false;
 		let progress = 0;
@@ -118,36 +119,39 @@ js13k.Creature = class extends EngineObject {
 
 			if( timerTo.elapsed() ) {
 				progress = timerBack.getPercent();
-				this.mirror = target.pos.x > origPos.x;
+				this.mirror = firstTarget.pos.x > origPos.x;
 			}
 			else {
 				progress = timerTo.getPercent();
-				this.mirror = target.pos.x < origPos.x;
+				this.mirror = firstTarget.pos.x < origPos.x;
 			}
 
 			if( timerTo.elapsed() && !attackDone ) {
 				timerBack.set( 0.3 );
 
 				endPos = startPos.copy();
-				startPos = target.pos;
+				startPos = firstTarget.pos;
 
-				target.soulPower -= this.attackDamage;
+				targets.forEach( target => {
+					target.soulPower -= this.attackDamage;
+					js13k.UI.effectSP( target, -this.attackDamage );
+					js13k.UI.effectBloodHit( target, { pos: origPos } );
+
+					if( target.soulPower <= 0 ) {
+						target.die();
+
+						// Destroying an enemy increases soul power.
+						if( isPlayer ) {
+							this.soulPower += 5;
+							js13k.UI.effectSP( { pos: origPos }, 5 );
+						}
+					}
+				} );
+
 				isPlayer ? js13k.soundHit1.play() : js13k.soundHit2.play();
-				js13k.UI.effectSP( target, -this.attackDamage );
-				js13k.UI.effectBloodHit( target, { pos: origPos } );
 
 				if( !isPlayer ) {
 					js13k.UI.effectRumble();
-				}
-
-				if( target.soulPower <= 0 ) {
-					target.die();
-
-					// Destroying an enemy increases soul power.
-					if( isPlayer ) {
-						this.soulPower += 5;
-						js13k.UI.effectSP( { pos: origPos }, 5 );
-					}
 				}
 
 				attackDone = true;
@@ -155,8 +159,13 @@ js13k.Creature = class extends EngineObject {
 			else if( timerBack.elapsed() ) {
 				this.angle = 0;
 				this.isWalking = false;
-				this.mirror = target.pos.x < origPos.x;
+				this.mirror = firstTarget.pos.x < origPos.x;
 				this.pos = origPos;
+				this.renderOrder = this.pos.y;
+
+				if( this.type == js13k.Creature.GIANT ) {
+					this.renderOrder -= 0.5;
+				}
 
 				cbEnd();
 
@@ -190,7 +199,7 @@ js13k.Creature = class extends EngineObject {
 		if( distance <= this.viewRange ) {
 			// Player is also within attack range.
 			if( this.attacksLeft && distance <= this.attackRange ) {
-				action = this.getTurnActionAttack( player );
+				action = this.getTurnActionAttack( [player] );
 				this.attacksLeft--;
 			}
 			// Move towards player.
@@ -254,11 +263,11 @@ js13k.Creature = class extends EngineObject {
 
 
 	/**
-	 * @param  {js13k.Creature} target
+	 * @param  {js13k.Creature[]} targets
 	 * @return {function}
 	 */
-	getTurnActionAttack( target ) {
-		return this._getTurnActionAttackNormal( target );
+	getTurnActionAttack( targets ) {
+		return this._getTurnActionAttackNormal( targets );
 	}
 
 

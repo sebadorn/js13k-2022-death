@@ -85,31 +85,14 @@ js13k.Player = class extends js13k.Creature {
 
 		this.soulPower -= this.attackCost;
 
+		const handled = [];
+		let gained = 0;
+
 		return cbEnd => {
 			if( timer.elapsed() ) {
-				let gained = 0;
-
-				targets.forEach( ( target, i ) => {
-					// Each hit reduces the damage further.
-					const dmg = max( this.attackDamage - i * 2, 0 );
-					target.soulPower -= dmg;
-					js13k.UI.effectSP( target, -dmg );
-					js13k.UI.effectBloodHit( target, this );
-
-					if( target.soulPower <= 0 ) {
-						target.die();
-
-						// Destroying an enemy increases soul power.
-						this.soulPower += 5;
-						gained += 5;
-					}
-				} );
-
 				if( gained > 0 ) {
 					js13k.UI.effectSP( this, gained);
 				}
-
-				js13k.soundHit1.play();
 
 				hatchet.destroy();
 				cbEnd();
@@ -119,6 +102,33 @@ js13k.Player = class extends js13k.Creature {
 				hatchet.angle = progress * Math.PI * 4;
 				hatchet.pos.x = lastTarget.pos.x * progress + this.pos.x * ( 1 - progress );
 				hatchet.pos.y = lastTarget.pos.y * progress + this.pos.y * ( 1 - progress );
+
+				for( let i = 0; i < targets.length; i++ ) {
+					const target = targets[i];
+
+					if(
+						!handled.includes( target ) &&
+						hatchet.pos.distance( target.pos ) < 0.9
+					) {
+						// Each hit reduces the damage further.
+						const dmg = max( this.attackDamage - i * 2, 0 );
+						target.soulPower -= dmg;
+						js13k.UI.effectSP( target, -dmg );
+						js13k.UI.effectBloodHit( target, this );
+						js13k.soundHit1.play();
+
+						if( target.soulPower <= 0 ) {
+							target.die();
+
+							// Destroying an enemy increases soul power.
+							this.soulPower += 5;
+							gained += 5;
+						}
+
+						handled.push( target );
+						break;
+					}
+				}
 			}
 		};
 	}
@@ -135,15 +145,15 @@ js13k.Player = class extends js13k.Creature {
 	/**
 	 *
 	 * @override
-	 * @param  {js13k.Creature|js13k.Creature[]} targets
+	 * @param  {js13k.Creature[]} targets
 	 * @return {function}
 	 */
 	getTurnActionAttack( targets ) {
 		if( this.attackType == 1 ) {
-			return this._getTurnActionAttackSweepingBlow( targets );
+			return this._getTurnActionAttackThrow( targets );
 		}
 		else if( this.attackType == 2 ) {
-			return this._getTurnActionAttackThrow( targets );
+			return this._getTurnActionAttackSweepingBlow( targets );
 		}
 
 		return this._getTurnActionAttackNormal( targets );
@@ -157,9 +167,9 @@ js13k.Player = class extends js13k.Creature {
 	setAttack( type ) {
 		const list = [
 			// DMG, range, cost
-			[10, 1.5,  0], // normal attack
-			[10, 1.5, 20], // sweeping blow
-			[ 8, 4.5, 20], // hatchet throw
+			[12, 1.5, 2], // normal attack
+			[ 8, 4.5, 5], // hatchet throw
+			[10, 1.5, 8], // sweeping blow
 		];
 
 		const attack = list[type];

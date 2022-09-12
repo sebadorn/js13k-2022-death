@@ -38,20 +38,20 @@ js13k.UI = {
 			overlayContext.textBaseline = 'top';
 
 			this.writeText( 'SP ' + player.soulPower.toFixed(), 16, 28, '#fff', '#000' );
-			this.writeText( 'MV ' + player.movesLeft.toFixed( 1 ), 16, 50, '#fff', '#000' );
+			this.writeText( 'MV ' + player.movesLeft.toFixed(), 16, 50, '#fff', '#000' );
 
 			this.writeText(
-				'[1] Direct Attack,   0 SP',
+				'[1] Direct Attack, -2 SP',
 				16, 94,
 				player.attackType == 0 ? '#c7e' : '#fff', '#000'
 			);
 			this.writeText(
-				'[2] Sweeping Blow, -10 SP',
+				'[2] Throw Hatchet, -5 SP',
 				16, 116,
 				player.attackType == 1 ? '#c7e' : '#fff', '#000'
 			);
 			this.writeText(
-				'[3] Throw Hatchet, -10 SP',
+				'[3] Sweeping Blow, -8 SP',
 				16, 138,
 				player.attackType == 2 ? '#c7e' : '#fff', '#000'
 			);
@@ -197,6 +197,11 @@ js13k.UI = {
 					node.style.bottom = 20 + marginY + 'px';
 					node.style.left = ( window.innerWidth - dialogWidth - 20 ) * 0.5 + 'px';
 					node.style.width = dialogWidth + 'px';
+
+					if( id == 'how' ) {
+						const rect = node.getBoundingClientRect();
+						node.style.bottom = ( window.innerHeight - rect.height ) * 0.5 + 'px';
+					}
 				}
 			}, 100 );
 		};
@@ -209,9 +214,9 @@ js13k.UI = {
 
 		const attacks = this.buildNode(
 			'<div class="b">' +
-				'<button style="top:0">[1] Direct Attack,   0 SP</button>' +
-				'<button style="top:22px">[2] Sweeping Blow, -10 SP</button>' +
-				'<button style="top:44px">[3] Throw Hatchet, -10 SP</button>' +
+				'<button style="top:0">[1] Direct Attack, -2 SP</button>' +
+				'<button style="top:22px">[2] Throw Hatchet, -5 SP</button>' +
+				'<button style="top:44px">[3] Sweeping Blow, -8 SP</button>' +
 			'</div>'
 		);
 
@@ -284,6 +289,11 @@ js13k.UI = {
 			);
 
 			document.body.append( node );
+
+			if( key == 'how' ) {
+				const rect = node.getBoundingClientRect();
+				node.style.bottom = ( window.innerHeight - rect.height ) * 0.5 + 'px';
+			}
 
 			node.querySelector( 'button' ).onclick = _ev => {
 				node.remove();

@@ -141,19 +141,6 @@ const randInt = (a=1, b=0)=> rand(a,b)|0;
  *  @memberof Random */
 const randSign = ()=> (rand(2)|0) * 2 - 1;
 
-/** Returns a random Vector2 within a circular shape
- *  @param {Number} [radius=1]
- *  @param {Number} [minRadius=0]
- *  @return {Vector2}
- *  @memberof Random */
-const randInCircle = (radius=1, minRadius=0)=> radius > 0 ? randVector(radius * rand(minRadius / radius, 1)**.5) : new Vector2;
-
-/** Returns a random Vector2 with the passed in length
- *  @param {Number} [length=1]
- *  @return {Vector2}
- *  @memberof Random */
-const randVector = (length=1)=> new Vector2().setAngle(rand(2*PI), length);
-
 /** Returns a random color between the two passed in colors, combine components if linear
  *  @param {Color}   [colorA=new Color(1,1,1,1)]
  *  @param {Color}   [colorB=new Color(0,0,0,1)]
@@ -273,56 +260,18 @@ class Vector2
      * @return {Vector2} */
     clampLength(length=1) { const l = this.length(); return l > length ? this.scale(length/l) : this; }
 
-    /** Returns the dot product of this and the vector passed in
-     * @param {Vector2} vector
-     * @return {Number} */
-    dot(v) { return this.x*v.x + this.y*v.y; }
-
-    /** Returns the cross product of this and the vector passed in
-     * @param {Vector2} vector
-     * @return {Number} */
-    cross(v) { return this.x*v.y - this.y*v.x; }
-
     /** Returns the angle of this vector, up is angle 0
      * @return {Number} */
     angle() { return Math.atan2(this.x, this.y); }
-
-    /** Sets this vector with angle and length passed in
-     * @param {Number} [angle=0]
-     * @param {Number} [length=1] */
-    setAngle(a=0, length=1) { this.x = length*Math.sin(a); this.y = length*Math.cos(a); return this; }
 
     /** Returns copy of this vector rotated by the angle passed in
      * @param {Number} angle
      * @return {Vector2} */
     rotate(a) { const c = Math.cos(a), s = Math.sin(a); return new Vector2(this.x*c-this.y*s, this.x*s+this.y*c); }
 
-    /** Returns the integer direction of this vector, corrosponding to multiples of 90 degree rotation (0-3)
-     * @return {Number} */
-    direction() { return abs(this.x) > abs(this.y) ? this.x < 0 ? 3 : 1 : this.y < 0 ? 2 : 0; }
-
-    /** Returns a copy of this vector that has been inverted
-     * @return {Vector2} */
-    invert() { return new Vector2(this.y, -this.x); }
-
     /** Returns a copy of this vector with each axis floored
      * @return {Vector2} */
     floor() { return new Vector2(Math.floor(this.x), Math.floor(this.y)); }
-
-    /** Returns the area this vector covers as a rectangle
-     * @return {Number} */
-    area() { return abs(this.x * this.y); }
-
-    /** Returns a new vector that is p percent between this and the vector passed in
-     * @param {Vector2} vector
-     * @param {Number}  percent
-     * @return {Vector2} */
-    lerp(v, p) { return this.add(v.subtract(this).scale(clamp(p))); }
-
-    /** Returns true if this vector is within the bounds of an array size passed in
-     * @param {Vector2} arraySize
-     * @return {Boolean} */
-    arrayCheck(arraySize) { return this.x >= 0 && this.y >= 0 && this.x < arraySize.x && this.y < arraySize.y; }
 
     /** Returns this vector expressed as a string
      * @return {String} */
@@ -426,16 +375,9 @@ class Timer
      *  @param {Number} [timeLeft=0] - How much time left before the timer is elapsed in seconds */
     set(timeLeft=0) { this.time = time + timeLeft; this.setTime = timeLeft; }
 
-    /** Unset the timer */
-    unset() { this.time = undefined; }
-
     /** Returns true if set
      * @return {Boolean} */
     isSet() { return this.time != undefined; }
-
-    /** Returns true if set and has not elapsed
-     * @return {Boolean} */
-    active() { return time <= this.time; }
 
     /** Returns true if set and elapsed
      * @return {Boolean} */
@@ -504,10 +446,6 @@ let objectDefaultSize = vec2(1);
  *  @memberof Settings */
 let gravity = 0;
 
-/** Scales emit rate of particles, useful for low graphics mode (0 disables particle emitters)
- *  @default
- *  @memberof Settings */
-let particleEmitRateScale = 1;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Camera settings
@@ -554,10 +492,6 @@ let gamepadDirectionEmulateStick = 1;
  *  @memberof Settings */
 let inputWASDEmulateDirection = 1;
 
-/** Allow vibration hardware if it exists
- *  @default
- *  @memberof Settings */
-let vibrateEnable = 1;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Audio settings
@@ -566,11 +500,6 @@ let vibrateEnable = 1;
  *  @default
  *  @memberof Settings */
 let soundVolume = .5;
-
-/** All audio code can be disabled and removed from build
- *  @default
- *  @memberof Settings */
-let soundEnable = 1;
 
 /** Default range where sound no longer plays
  *  @default
@@ -617,9 +546,6 @@ const timeDelta = 1/frameRate;
 
 /** Array containing all engine objects */
 let engineObjects = [];
-
-/** Array containing only objects that are set to collide with other objects this frame (for optimization) */
-let engineObjectsCollide = [];
 
 /** Current update frame, used to calculate time */
 let frame = 0;
@@ -789,9 +715,6 @@ function enginePreRender()
 /** Calls update on each engine object (recursively if child), removes destroyed objects, and updated time */
 function engineObjectsUpdate()
 {
-    // get list of solid objects for physics optimzation
-    engineObjectsCollide = engineObjects.filter(o=>o.collideSolidObjects);
-
     // recursive object update
     const updateObject = (o)=>
     {
@@ -812,38 +735,6 @@ function engineObjectsUpdate()
     time = ++frame / frameRate;
 }
 
-/** Destroy and remove all objects */
-function engineObjectsDestroy()
-{
-    for (const o of engineObjects)
-        o.parent || o.destroy();
-    engineObjects = engineObjects.filter(o=>!o.destroyed);
-}
-
-/** Triggers a callback for each object within a given area
- *  @param {Vector2} [pos]                 - Center of test area
- *  @param {Number} [size]                 - Radius of circle if float, rectangle size if Vector2
- *  @param {Function} [callbackFunction]   - Calls this function on every object that passes the test
- *  @param {Array} [objects=engineObjects] - List of objects to check */
-function engineObjectsCallback(pos, size, callbackFunction, objects=engineObjects)
-{
-    if (!pos) // all objects
-    {
-        for (const o of objects)
-            callbackFunction(o);
-    }
-    else if (size.x != undefined)  // bounding box test
-    {
-        for (const o of objects)
-            isOverlapping(pos, size, o.pos, o.size) && callbackFunction(o);
-    }
-    else  // circle test
-    {
-        const sizeSquared = size*size;
-        for (const o of objects)
-            pos.distanceSquared(o.pos) < sizeSquared && callbackFunction(o);
-    }
-}
 /*
     LittleJS Object System
 */
@@ -911,7 +802,6 @@ class EngineObject
         this.renderOrder = renderOrder;
 
         // init other internal object stuff
-        this.spawnTime = time;
         this.children = [];
 
         // add to list of objects
@@ -950,25 +840,9 @@ class EngineObject
             child.destroy(child.parent = 0);
     }
 
-    /** How long since the object was created
-     *  @return {Number} */
-    getAliveTime()                    { return time - this.spawnTime; }
-
     /** Get the direction of the mirror
      *  @return {Number} -1 if this.mirror is true, or 1 if not mirrored */
     getMirrorSign() { return this.mirror ? -1 : 1; }
-
-    /** Attaches a child to this with a given local transform
-     *  @param {EngineObject} child
-     *  @param {Vector2}      [localPos=new Vector2]
-     *  @param {Number}       [localAngle=0] */
-    addChild(child, localPos=vec2(), localAngle=0)
-    {
-        this.children.push(child);
-        child.parent = this;
-        child.localPos = localPos.copy();
-        child.localAngle = localAngle;
-    }
 
     /** Removes a child from this one
      *  @param {EngineObject} child */
@@ -1442,17 +1316,6 @@ function gamepadsUpdate()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-/** Pulse the vibration hardware if it exists
- *  @param {Number} [pattern=100] - a single value in miliseconds or vibration interval array
- *  @memberof Input */
-const vibrate = (pattern)=> vibrateEnable && Navigator.vibrate && Navigator.vibrate(pattern);
-
-/** Cancel any ongoing vibration
- *  @memberof Input */
-const vibrateStop = ()=> vibrate(0);
-
-///////////////////////////////////////////////////////////////////////////////
 // Touch input
 
 /** True if a touch device has been detected
@@ -1522,8 +1385,6 @@ class Sound
      */
     constructor(zzfxSound, range=soundDefaultRange, taper=soundDefaultTaper)
     {
-        if (!soundEnable) return;
-
         /** @property {Number} - World space max range of sound, will not play if camera is farther away */
         this.range = range;
 
@@ -1547,8 +1408,6 @@ class Sound
      */
     play(pos, volume=1, pitch=1, randomnessScale=1)
     {
-        if (!soundEnable) return;
-
         let pan = 0;
         if (pos)
         {
@@ -1572,129 +1431,7 @@ class Sound
         const playbackRate = pitch + pitch * this.randomness*randomnessScale*rand(-1,1);
         return playSamples([this.cachedSamples], volume, playbackRate, pan);
     }
-
-    /** Play the sound as a note with a semitone offset
-     *  @param {Number}  semitoneOffset - How many semitones to offset pitch
-     *  @param {Vector2} [pos] - World space position to play the sound, sound is not attenuated if null
-     *  @param {Number}  [volume=1] - How much to scale volume by (in addition to range fade)
-     *  @return {AudioBufferSourceNode} - The audio, can be used to stop sound later
-     */
-    playNote(semitoneOffset, pos, volume=1)
-    {
-        if (!soundEnable) return;
-
-        return this.play(pos, volume, 2**(semitoneOffset/12), 0);
-    }
 }
-
-/**
- * Music Object - Stores a zzfx music track for later use
- * <br>
- * <br><b><a href=https://keithclark.github.io/ZzFXM/>Create music with the ZzFXM tracker.</a></b>
- * @example
- * // create some music
- * const music_example = new Music(
- * [
- *     [                         // instruments
- *       [,0,400]                // simple note
- *     ],
- *     [                         // patterns
- *         [                     // pattern 1
- *             [                 // channel 0
- *                 0, -1,        // instrument 0, left speaker
- *                 1, 0, 9, 1    // channel notes
- *             ],
- *             [                 // channel 1
- *                 0, 1,         // instrument 1, right speaker
- *                 0, 12, 17, -1 // channel notes
- *             ]
- *         ],
- *     ],
- *     [0, 0, 0, 0], // sequence, play pattern 0 four times
- *     90            // BPM
- * ]);
- *
- * // play the music
- * music_example.play();
- */
-class Music
-{
-    /** Create a music object and cache the zzfx music samples for later use
-     *  @param {Array} zzfxMusic - Array of zzfx music parameters
-     */
-    constructor(zzfxMusic)
-    {
-        if (!soundEnable) return;
-
-        this.cachedSamples = zzfxM(...zzfxMusic);
-    }
-
-    /** Play the music
-     *  @param {Number}  [volume=1] - How much to scale volume by
-     *  @param {Boolean} [loop=1] - True if the music should loop when it reaches the end
-     *  @return {AudioBufferSourceNode} - The audio node, can be used to stop sound later
-     */
-    play(volume = 1, loop = 1)
-    {
-        if (!soundEnable) return;
-
-        return playSamples(this.cachedSamples, volume, 1, 0, loop);
-    }
-}
-
-/** Play an mp3 or wav audio from a local file or url
- *  @param {String}  url - Location of sound file to play
- *  @param {Number}  [volume=1] - How much to scale volume by
- *  @param {Boolean} [loop=1] - True if the music should loop when it reaches the end
- *  @return {HTMLAudioElement} - The audio element for this sound
- *  @memberof Audio */
-function playAudioFile(url, volume=1, loop=1)
-{
-    if (!soundEnable) return;
-
-    const audio = new Audio(url);
-    audio.volume = soundVolume * volume;
-    audio.loop = loop;
-    audio.play();
-    return audio;
-}
-
-/** Speak text with passed in settings
- *  @param {String} text - The text to speak
- *  @param {String} [language] - The language/accent to use (examples: en, it, ru, ja, zh)
- *  @param {Number} [volume=1] - How much to scale volume by
- *  @param {Number} [rate=1] - How quickly to speak
- *  @param {Number} [pitch=1] - How much to change the pitch by
- *  @return {SpeechSynthesisUtterance} - The utterance that was spoken
- *  @memberof Audio */
-function speak(text, language='', volume=1, rate=1, pitch=1)
-{
-    if (!soundEnable || !speechSynthesis) return;
-
-    // common languages (not supported by all browsers)
-    // en - english,  it - italian, fr - french,  de - german, es - spanish
-    // ja - japanese, ru - russian, zh - chinese, hi - hindi,  ko - korean
-
-    // build utterance and speak
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = language;
-    utterance.volume = 2*volume*soundVolume;
-    utterance.rate = rate;
-    utterance.pitch = pitch;
-    speechSynthesis.speak(utterance);
-    return utterance;
-}
-
-/** Stop all queued speech
- *  @memberof Audio */
-const speakStop = ()=> speechSynthesis && speechSynthesis.cancel();
-
-/** Get frequency of a note on a musical scale
- *  @param {Number} semitoneOffset - How many semitones away from the root note
- *  @param {Number} [rootNoteFrequency=220] - Frequency at semitone offset 0
- *  @return {Number} - The frequency of the note
- *  @memberof Audio */
-const getNoteFrequency = (semitoneOffset, rootFrequency=220)=> rootFrequency * 2**(semitoneOffset/12);
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -1712,8 +1449,6 @@ let audioContext;
  *  @memberof Audio */
 function playSamples(sampleChannels, volume=1, rate=1, pan=0, loop=0)
 {
-    if (!soundEnable) return;
-
     // create audio context
     if (!audioContext)
         audioContext = new (window.AudioContext||webkitAudioContext);
@@ -1852,393 +1587,6 @@ function zzfxG
     return b;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// ZzFX Music Renderer v2.0.3 by Keith Clark and Frank Force
-
-/** Generate samples for a ZzFM song with given parameters
- *  @param {Array} instruments - Array of ZzFX sound paramaters
- *  @param {Array} patterns - Array of pattern data
- *  @param {Array} sequence - Array of pattern indexes
- *  @param {Number} [BPM=125] - Playback speed of the song in BPM
- *  @returns {Array} - Left and right channel sample data
- *  @memberof Audio */
-function zzfxM(instruments, patterns, sequence, BPM = 125)
-{
-  let instrumentParameters;
-  let i;
-  let j;
-  let k;
-  let note;
-  let sample;
-  let patternChannel;
-  let notFirstBeat;
-  let stop;
-  let instrument;
-  let attenuation;
-  let outSampleOffset;
-  let isSequenceEnd;
-  let sampleOffset = 0;
-  let nextSampleOffset;
-  let sampleBuffer = [];
-  let leftChannelBuffer = [];
-  let rightChannelBuffer = [];
-  let channelIndex = 0;
-  let panning = 0;
-  let hasMore = 1;
-  let sampleCache = {};
-  let beatLength = zzfxR / BPM * 60 >> 2;
-
-  // for each channel in order until there are no more
-  for (; hasMore; channelIndex++) {
-
-    // reset current values
-    sampleBuffer = [hasMore = notFirstBeat = outSampleOffset = 0];
-
-    // for each pattern in sequence
-    sequence.forEach((patternIndex, sequenceIndex) => {
-      // get pattern for current channel, use empty 1 note pattern if none found
-      patternChannel = patterns[patternIndex][channelIndex] || [0, 0, 0];
-
-      // check if there are more channels
-      hasMore |= !!patterns[patternIndex][channelIndex];
-
-      // get next offset, use the length of first channel
-      nextSampleOffset = outSampleOffset + (patterns[patternIndex][0].length - 2 - !notFirstBeat) * beatLength;
-      // for each beat in pattern, plus one extra if end of sequence
-      isSequenceEnd = sequenceIndex == sequence.length - 1;
-      for (i = 2, k = outSampleOffset; i < patternChannel.length + isSequenceEnd; notFirstBeat = ++i) {
-
-        // <channel-note>
-        note = patternChannel[i];
-
-        // stop if end, different instrument or new note
-        stop = i == patternChannel.length + isSequenceEnd - 1 && isSequenceEnd ||
-            instrument != (patternChannel[0] || 0) | note | 0;
-
-        // fill buffer with samples for previous beat, most cpu intensive part
-        for (j = 0; j < beatLength && notFirstBeat;
-
-            // fade off attenuation at end of beat if stopping note, prevents clicking
-            j++ > beatLength - 99 && stop ? attenuation += (attenuation < 1) / 99 : 0
-        ) {
-          // copy sample to stereo buffers with panning
-          sample = (1 - attenuation) * sampleBuffer[sampleOffset++] / 2 || 0;
-          leftChannelBuffer[k] = (leftChannelBuffer[k] || 0) - sample * panning + sample;
-          rightChannelBuffer[k] = (rightChannelBuffer[k++] || 0) + sample * panning + sample;
-        }
-
-        // set up for next note
-        if (note) {
-          // set attenuation
-          attenuation = note % 1;
-          panning = patternChannel[1] || 0;
-          if (note |= 0) {
-            // get cached sample
-            sampleBuffer = sampleCache[
-              [
-                instrument = patternChannel[sampleOffset = 0] || 0,
-                note
-              ]
-            ] = sampleCache[[instrument, note]] || (
-                // add sample to cache
-                instrumentParameters = [...instruments[instrument]],
-                instrumentParameters[2] *= 2 ** ((note - 12) / 12),
-
-                // allow negative values to stop notes
-                note > 0 ? zzfxG(...instrumentParameters) : []
-            );
-          }
-        }
-      }
-
-      // update the sample offset
-      outSampleOffset = nextSampleOffset;
-    });
-  }
-
-  return [leftChannelBuffer, rightChannelBuffer];
-}
-
-/*
-    LittleJS Particle System
-    - Spawns particles with randomness from parameters
-    - Updates particle physics
-    - Fast particle rendering
-*/
-
-
-/**
- * Particle Emitter - Spawns particles with the given settings
- * @extends EngineObject
- * @example
- * // create a particle emitter
- * let pos = vec2(2,3);
- * let particleEmiter = new ParticleEmitter
- * (
- *     pos, 0, 1, 0, 500, PI,  // pos, angle, emitSize, emitTime, emitRate, emiteCone
- *     0, vec2(16),                            // tileIndex, tileSize
- *     new Color(1,1,1),   new Color(0,0,0),   // colorStartA, colorStartB
- *     new Color(1,1,1,0), new Color(0,0,0,0), // colorEndA, colorEndB
- *     2, .2, .2, .1, .05,  // particleTime, sizeStart, sizeEnd, particleSpeed, particleAngleSpeed
- *     .99, 1, 1, PI, .05,  // damping, angleDamping, gravityScale, particleCone, fadeRate,
- *     .5, 1                // randomness, collide, additive, randomColorLinear, renderOrder
- * );
- */
-class ParticleEmitter extends EngineObject
-{
-    /** Create a particle system with the given settings
-     *  @param {Vector2} position           - World space position of the emitter
-     *  @param {Number}  [angle=0]          - Angle to emit the particles
-     *  @param {Number}  [emitSize=0]       - World space size of the emitter (float for circle diameter, vec2 for rect)
-     *  @param {Number}  [emitTime=0]       - How long to stay alive (0 is forever)
-     *  @param {Number}  [emitRate=100]     - How many particles per second to spawn, does not emit if 0
-     *  @param {Number}  [emitConeAngle=PI] - Local angle to apply velocity to particles from emitter
-     *  @param {Number}  [tileIndex=-1]     - Index into tile sheet, if <0 no texture is applied
-     *  @param {Number}  [tileSize=tileSizeDefault]     - Tile size for particles
-     *  @param {Color}   [colorStartA=new Color(1,1,1)] - Color at start of life 1, randomized between start colors
-     *  @param {Color}   [colorStartB=new Color(1,1,1)] - Color at start of life 2, randomized between start colors
-     *  @param {Color}   [colorEndA=new Color(1,1,1,0)] - Color at end of life 1, randomized between end colors
-     *  @param {Color}   [colorEndB=new Color(1,1,1,0)] - Color at end of life 2, randomized between end colors
-     *  @param {Number}  [particleTime=.5]      - How long particles live
-     *  @param {Number}  [sizeStart=.1]         - How big are particles at start
-     *  @param {Number}  [sizeEnd=1]            - How big are particles at end
-     *  @param {Number}  [speed=.1]             - How fast are particles when spawned
-     *  @param {Number}  [angleSpeed=.05]       - How fast are particles rotating
-     *  @param {Number}  [damping=1]            - How much to dampen particle speed
-     *  @param {Number}  [angleDamping=1]       - How much to dampen particle angular speed
-     *  @param {Number}  [gravityScale=0]       - How much does gravity effect particles
-     *  @param {Number}  [particleConeAngle=PI] - Cone for start particle angle
-     *  @param {Number}  [fadeRate=.1]          - How quick to fade in particles at start/end in percent of life
-     *  @param {Number}  [randomness=.2]        - Apply extra randomness percent
-     *  @param {Boolean} [collideTiles=0]       - Do particles collide against tiles
-     *  @param {Boolean} [additive=0]           - Should particles use addtive blend
-     *  @param {Boolean} [randomColorLinear=1]  - Should color be randomized linearly or across each component
-     *  @param {Number}  [renderOrder=0]        - Render order for particles (additive is above other stuff by default)
-     */
-    constructor
-    (
-        pos,
-        angle,
-        emitSize = 0,
-        emitTime = 0,
-        emitRate = 100,
-        emitConeAngle = PI,
-        tileIndex = -1,
-        tileSize = tileSizeDefault,
-        colorStartA = new Color,
-        colorStartB = new Color,
-        colorEndA = new Color(1,1,1,0),
-        colorEndB = new Color(1,1,1,0),
-        particleTime = .5,
-        sizeStart = .1,
-        sizeEnd = 1,
-        speed = .1,
-        angleSpeed = .05,
-        damping = 1,
-        angleDamping = 1,
-        gravityScale = 0,
-        particleConeAngle = PI,
-        fadeRate = .1,
-        randomness = .2,
-        collideTiles,
-        additive,
-        randomColorLinear = 1,
-        renderOrder = additive ? 1e9 : 0
-    )
-    {
-        super(pos, new Vector2, tileIndex, tileSize, angle, undefined, renderOrder);
-
-        // emitter settings
-        /** @property {Number} - World space size of the emitter (float for circle diameter, vec2 for rect) */
-        this.emitSize = emitSize
-        /** @property {Number} - How long to stay alive (0 is forever) */
-        this.emitTime = emitTime;
-        /** @property {Number} - How many particles per second to spawn, does not emit if 0 */
-        this.emitRate = emitRate;
-        /** @property {Number} - Local angle to apply velocity to particles from emitter */
-        this.emitConeAngle = emitConeAngle;
-
-        // color settings
-        /** @property {Color} - Color at start of life 1, randomized between start colors */
-        this.colorStartA = colorStartA;
-        /** @property {Color} - Color at start of life 2, randomized between start colors */
-        this.colorStartB = colorStartB;
-        /** @property {Color} - Color at end of life 1, randomized between end colors */
-        this.colorEndA   = colorEndA;
-        /** @property {Color} - Color at end of life 2, randomized between end colors */
-        this.colorEndB   = colorEndB;
-        /** @property {Boolean} - Should color be randomized linearly or across each component */
-        this.randomColorLinear = randomColorLinear;
-
-        // particle settings
-        /** @property {Number} - How long particles live */
-        this.particleTime      = particleTime;
-        /** @property {Number} - How big are particles at start */
-        this.sizeStart         = sizeStart;
-        /** @property {Number} - How big are particles at end */
-        this.sizeEnd           = sizeEnd;
-        /** @property {Number} - How fast are particles when spawned */
-        this.speed             = speed;
-        /** @property {Number} - How fast are particles rotating */
-        this.angleSpeed        = angleSpeed;
-        /** @property {Number} - How much to dampen particle speed */
-        this.damping           = damping;
-        /** @property {Number} - How much to dampen particle angular speed */
-        this.angleDamping      = angleDamping;
-        /** @property {Number} - How much does gravity effect particles */
-        this.gravityScale      = gravityScale;
-        /** @property {Number} - Cone for start particle angle */
-        this.particleConeAngle = particleConeAngle;
-        /** @property {Number} - How quick to fade in particles at start/end in percent of life */
-        this.fadeRate          = fadeRate;
-        /** @property {Number} - Apply extra randomness percent */
-        this.randomness        = randomness;
-        /** @property {Number} - Do particles collide against tiles */
-        this.collideTiles      = collideTiles;
-        /** @property {Number} - Should particles use addtive blend */
-        this.additive          = additive;
-        /** @property {Number} - If set the partile is drawn as a trail, stretched in the drection of velocity */
-        this.trailScale        = 0;
-
-        // internal variables
-        this.emitTimeBuffer    = 0;
-    }
-
-    /** Update the emitter to spawn particles, called automatically by engine once each frame */
-    update()
-    {
-        // only do default update to apply parent transforms
-        this.parent && super.update();
-
-        // update emitter
-        if (!this.emitTime || this.getAliveTime() <= this.emitTime)
-        {
-            // emit particles
-            if (this.emitRate * particleEmitRateScale)
-            {
-                const rate = 1/this.emitRate/particleEmitRateScale;
-                for (this.emitTimeBuffer += timeDelta; this.emitTimeBuffer > 0; this.emitTimeBuffer -= rate)
-                    this.emitParticle();
-            }
-        }
-        else
-            this.destroy();
-    }
-
-    /** Spawn one particle
-     *  @return {Particle} */
-    emitParticle()
-    {
-        // spawn a particle
-        const pos = this.emitSize.x != undefined ? // check if vec2 was used for size
-            (new Vector2(rand(-.5,.5), rand(-.5,.5))).multiply(this.emitSize).rotate(this.angle) // box emitter
-            : randInCircle(this.emitSize * .5);                                                  // circle emitter
-        const particle = new Particle(this.pos.add(pos), this.tileIndex, this.tileSize,
-            this.angle + rand(this.particleConeAngle, -this.particleConeAngle));
-
-        // randomness scales each paremeter by a percentage
-        const randomness = this.randomness;
-        const randomizeScale = (v)=> v + v*rand(randomness, -randomness);
-
-        // randomize particle settings
-        const particleTime = randomizeScale(this.particleTime);
-        const sizeStart    = randomizeScale(this.sizeStart);
-        const sizeEnd      = randomizeScale(this.sizeEnd);
-        const speed        = randomizeScale(this.speed);
-        const angleSpeed   = randomizeScale(this.angleSpeed) * randSign();
-        const coneAngle    = rand(this.emitConeAngle, -this.emitConeAngle);
-        const colorStart   = randColor(this.colorStartA, this.colorStartB, this.randomColorLinear);
-        const colorEnd     = randColor(this.colorEndA,   this.colorEndB, this.randomColorLinear);
-
-        // build particle settings
-        particle.colorStart    = colorStart;
-        particle.colorEndDelta = colorEnd.subtract(colorStart);
-        particle.velocity      = (new Vector2).setAngle(this.angle + coneAngle, speed);
-        particle.angleVelocity = angleSpeed;
-        particle.lifeTime      = particleTime;
-        particle.sizeStart     = sizeStart;
-        particle.sizeEndDelta  = sizeEnd - sizeStart;
-        particle.fadeRate      = this.fadeRate;
-        particle.damping       = this.damping;
-        particle.angleDamping  = this.angleDamping;
-        particle.elasticity    = this.elasticity;
-        particle.friction      = this.friction;
-        particle.gravityScale  = this.gravityScale;
-        particle.collideTiles  = this.collideTiles;
-        particle.additive      = this.additive;
-        particle.renderOrder   = this.renderOrder;
-        particle.trailScale    = this.trailScale;
-        particle.mirror        = rand()<.5;
-
-        // setup callbacks for particles
-        particle.destroyCallback = this.particleDestroyCallback;
-        this.particleCreateCallback && this.particleCreateCallback(particle);
-
-        // return the newly created particle
-        return particle;
-    }
-
-    // Particle emitters are not rendered, only the particles are
-    render() {}
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- * Particle Object - Created automatically by Particle Emitters
- * @extends EngineObject
- */
-class Particle extends EngineObject
-{
-    /**
-     * Create a particle with the given settings
-     * @param {Vector2} position                   - World space position of the particle
-     * @param {Number}  [tileIndex=-1]             - Tile to use to render, untextured if -1
-     * @param {Vector2} [tileSize=tileSizeDefault] - Size of tile in source pixels
-     * @param {Number}  [angle=0]                  - Angle to rotate the particle
-     */
-    constructor(pos, tileIndex, tileSize, angle) { super(pos, new Vector2, tileIndex, tileSize, angle); }
-
-    /** Render the particle, automatically called each frame, sorted by renderOrder */
-    render()
-    {
-        // modulate size and color
-        const p = min((time - this.spawnTime) / this.lifeTime, 1);
-        const radius = this.sizeStart + p * this.sizeEndDelta;
-        const size = new Vector2(radius, radius);
-        const fadeRate = this.fadeRate/2;
-        const color = new Color(
-            this.colorStart.r + p * this.colorEndDelta.r,
-            this.colorStart.g + p * this.colorEndDelta.g,
-            this.colorStart.b + p * this.colorEndDelta.b,
-            (this.colorStart.a + p * this.colorEndDelta.a) *
-             (p < fadeRate ? p/fadeRate : p > 1-fadeRate ? (1-p)/fadeRate : 1)); // fade alpha
-
-        // draw the particle
-        this.additive && setBlendMode(1);
-        if (this.trailScale)
-        {
-            // trail style particles
-            const speed = this.velocity.length();
-            const direction = this.velocity.scale(1/speed);
-            const trailLength = speed * this.trailScale;
-            size.y = max(size.x, trailLength);
-            this.angle = direction.angle();
-            drawTile(this.pos.add(direction.multiply(vec2(0,-trailLength/2))), size, this.tileIndex, this.tileSize, color, this.angle, this.mirror);
-        }
-        else
-            drawTile(this.pos, size, this.tileIndex, this.tileSize, color, this.angle, this.mirror);
-        this.additive && setBlendMode();
-
-        if (p == 1)
-        {
-            // destroy particle when it's time runs out
-            this.color = color;
-            this.size = size;
-            this.destroyCallback && this.destroyCallback(this);
-            this.destroyed = 1;
-        }
-    }
-}
 /**
  * LittleJS WebGL Interface
  * <br> - All webgl used by the engine is wrapped up here

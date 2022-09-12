@@ -37,11 +37,7 @@ js13k.TurnManager = {
 					// Move to tile.
 					if( mouseWasPressed( 0 ) ) {
 						this._turnAction = player.getTurnActionMove( mouseX, mouseY );
-						player.movesLeft -= Math.round( distance * 2 ) / 2;
-
-						// if( player.movesLeft < 1 ) {
-						// 	player.movesLeft = 0;
-						// }
+						player.movesLeft -= Math.ceil( distance );
 					}
 				}
 			}
@@ -88,17 +84,17 @@ js13k.TurnManager = {
 	 * @param  {js13k.Tile}     tile     - The currently selected tile.
 	 * @param  {js13k.Player}   player
 	 * @param  {js13k.Creature} creature
-	 * @return {?(js13k.Creature|js13k.Creature[])}
+	 * @return {?js13k.Creature[]}
 	 */
 	_highlightTilesForAttack( tile, player, creature ) {
-		let attackables = [creature];
+		const attackables = [creature];
 
 		const pos = player.pos.copy();
 		pos.x = Math.round( pos.x );
 		pos.y = Math.round( pos.y );
 
 		// Sweeping Blow: Highlight all tiles around the player.
-		if( player.attackType == 1 ) {
+		if( player.attackType == 2 ) {
 			const tiles = [
 				vec2( pos.x + 1, pos.y + 1 ),
 				vec2( pos.x + 1, pos.y - 1 ),
@@ -121,18 +117,20 @@ js13k.TurnManager = {
 					const tileContent = js13k.currentLevel.getTileContent( tPos );
 
 					if( tileContent ) {
-						const tileCreature = tileContent.find( c => c instanceof js13k.Creature );
+						const tileCreatures = tileContent.filter( c => c instanceof js13k.Creature );
 
-						if( tileCreature && !attackables.includes( tileCreature ) ) {
-							tileCreature.expectedDamage = player.attackDamage;
-							attackables.push( tileCreature );
-						}
+						tileCreatures.forEach( tc => {
+							if( !attackables.includes( tc ) ) {
+								tc.expectedDamage = player.attackDamage;
+								attackables.push( tc );
+							}
+						} );
 					}
 				}
 			} );
 		}
-		// Throw: Highlight all tiles from the player to the target.
-		else if( player.attackType == 2 ) {
+		// Hatchet Throw: Highlight all tiles from the player to the target.
+		else if( player.attackType == 1 ) {
 			const tiles = [];
 
 			const normedDirection = tile.pos.subtract( player.pos ).normalize();
@@ -158,11 +156,13 @@ js13k.TurnManager = {
 							return null;
 						}
 
-						const tileCreature = tileContent.find( c => c instanceof js13k.Creature );
+						const tileCreatures = tileContent.filter( c => c instanceof js13k.Creature );
 
-						if( tileCreature && !attackables.includes( tileCreature ) ) {
-							attackables.push( tileCreature );
-						}
+						tileCreatures.forEach( tc => {
+							if( !attackables.includes( tc ) ) {
+								attackables.push( tc );
+							}
+						} );
 					}
 
 					tiles.push( t );
@@ -183,9 +183,20 @@ js13k.TurnManager = {
 
 			tiles.forEach( t => t.highlightAttack = true );
 		}
+		// Direct Attack
 		else {
-			attackables = creature;
-			creature.expectedDamage = player.attackDamage;
+			const tileContent = js13k.currentLevel.getTileContent( creature.pos );
+
+			if( tileContent ) {
+				const tileCreatures = tileContent.filter( c => c instanceof js13k.Creature );
+
+				tileCreatures.forEach( tc => {
+					if( !attackables.includes( tc ) ) {
+						tc.expectedDamage = player.attackDamage;
+						attackables.push( tc );
+					}
+				} );
+			}
 		}
 
 		tile.highlightAttack = true;

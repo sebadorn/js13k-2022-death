@@ -12,13 +12,13 @@ const js13k = {
 
 
 window.addEventListener( 'load', () => {
-	showWatermark = true; // TODO: disable/remove for release
+	// showWatermark = true;
 
 	engineInit(
 		// init/setup
 		() => {
-			js13k.soundDie = new Sound( [1.22,.05,507,.01,.21,.36,1,3.99,0,.1,0,0,.19,1.7,0,.9,0,.35,.16,.34] );
-			js13k.soundHit1 = new Sound( [,,305,.01,.03,.09,3,1.27,2.7,,,,,.5,,.5,,.85,.02,.24] );
+			js13k.soundDie = new Sound( [1.4,.05,507,.01,.21,.36,1,3.99,0,.1,0,0,.19,1.7,0,.9,0,.35,.16,.34] );
+			js13k.soundHit1 = new Sound( [.8,,305,.01,.03,.09,3,1.27,2.7,,,,,.5,,.5,,.85,.02,.24] );
 			js13k.soundHit2 = new Sound( [1.1,.05,257,.01,.01,.14,1,2.2,-8.6,.1,0,0,0,1.4,0,.1,0,.8,.02,0] );
 
 			js13k.currentLevel = new js13k.Level();

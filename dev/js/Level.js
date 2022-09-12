@@ -57,7 +57,10 @@ js13k.Level = class {
 				}
 
 				if( floor == 'w' ) {
-					this.objects.push( this.buildObject( vec2( x, y ), 2 ) );
+					const wall = this.buildObject( vec2( x, y ), 2 );
+					wall.renderOrder = 0;
+
+					this.objects.push( wall );
 				}
 				else if( floor == 'p' ) {
 					const pillar = this.buildObject( vec2( x, y + 0.3 ), 0 );
@@ -67,6 +70,40 @@ js13k.Level = class {
 				}
 			}
 		}
+
+		const lights = [
+			vec2( 3, 8 ),
+			vec2( 11, 8 ),
+			vec2( 4, 12 ),
+			vec2( 10, 12 )
+		];
+
+		lights.forEach( pos => {
+			const light = this.buildObject( pos, 44 );
+			light.size = vec2( 0.5 );
+			light.tileSize = vec2( 16 );
+			light.isLight = true;
+
+			const lCenter = new EngineObject( pos );
+			lCenter.color = new Color( 1, 1, 0, 0.05 );
+
+			const lBottom = new EngineObject( pos.add( vec2( 0, -1 ) ) );
+			lBottom.color = new Color( 1, 1, 0, 0.03 );
+
+			const lLeft = new EngineObject( pos.add( vec2( -1, 0 ) ) );
+			lLeft.color = new Color( 1, 1, 0, 0.03 );
+
+			const lRight = new EngineObject( pos.add( vec2( 1, 0 ) ) );
+			lRight.color = new Color( 1, 1, 0, 0.03 );
+
+			const lLeftBottom = new EngineObject( pos.add( vec2( -1, -1 ) ) );
+			lLeftBottom.color = new Color( 1, 1, 0, 0.015 );
+
+			const lRightBottom = new EngineObject( pos.add( vec2( 1, -1 ) ) );
+			lRightBottom.color = new Color( 1, 1, 0, 0.015 );
+
+			this.decorations.push( light );
+		} );
 
 		// Player
 		this.player = new js13k.Player( vec2( 7, 1 ) );
@@ -89,7 +126,7 @@ js13k.Level = class {
 			'    s,,,bb,    ' +
 			'    ,b,,,,s    ' +
 			'    ,p,,,p,    ' +
-			'    ,,,,,,,    ';
+			'    s,,,,,b    ';
 
 		for( let y = 0; y < this.size.y; y++ ) {
 			for( let x = 0; x < this.size.x; x++ ) {
@@ -432,15 +469,32 @@ js13k.Level = class {
 					() => this.step = 2
 				);
 			}
+			else if( this.step == 2 ) {
+				js13k.UI.showDialog(
+					'how',
+					'Turn-based system',
+					'<ul style="margin-left:20px"><li style="margin-bottom:10px"><strong>Move:</strong> Use the mouse to select a tile in range.</li>' +
+					'<li style="margin-bottom:10px"><strong>Attack:</strong> Use the mouse to select a tile with an enemy on it. Different attacks can be selected with [1], [2], [3].</li>' +
+					'<li>You can end a turn early with [E].</li>' +
+					'</ul>',
+					() => this.step = 3
+				);
+			}
 		}
 
-		if( this.step < 2 || paused ) {
+		if( this.step < 3 || paused ) {
 			if( paused ) {
 				js13k.UI.hideAllDialog();
 			}
 
 			return;
 		}
+
+		this.decorations.forEach( d => {
+			if( d.isLight ) {
+				d.tileIndex = ~~time % 2 ? 44 : 45;
+			}
+		} );
 
 		cameraPos = this.player.pos.add( this.offset );
 		js13k.TurnManager.doTurn();
