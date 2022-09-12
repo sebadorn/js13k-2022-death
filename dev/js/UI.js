@@ -46,12 +46,12 @@ js13k.UI = {
 				player.attackType == 0 ? '#c7e' : '#fff', '#000'
 			);
 			this.writeText(
-				'[2] Throw Hatchet, -5 SP',
+				'[2] Throw Hatchet, -4 SP',
 				16, 116,
 				player.attackType == 1 ? '#c7e' : '#fff', '#000'
 			);
 			this.writeText(
-				'[3] Sweeping Blow, -8 SP',
+				'[3] Sweeping Blow, -6 SP',
 				16, 138,
 				player.attackType == 2 ? '#c7e' : '#fff', '#000'
 			);
@@ -215,8 +215,8 @@ js13k.UI = {
 		const attacks = this.buildNode(
 			'<div class="b">' +
 				'<button style="top:0">[1] Direct Attack, -2 SP</button>' +
-				'<button style="top:22px">[2] Throw Hatchet, -5 SP</button>' +
-				'<button style="top:44px">[3] Sweeping Blow, -8 SP</button>' +
+				'<button style="top:22px">[2] Throw Hatchet, -4 SP</button>' +
+				'<button style="top:44px">[3] Sweeping Blow, -6 SP</button>' +
 			'</div>'
 		);
 

@@ -168,8 +168,8 @@ js13k.Player = class extends js13k.Creature {
 		const list = [
 			// DMG, range, cost
 			[12, 1.5, 2], // normal attack
-			[ 8, 4.5, 5], // hatchet throw
-			[10, 1.5, 8], // sweeping blow
+			[ 8, 4.5, 4], // hatchet throw
+			[10, 1.5, 6], // sweeping blow
 		];
 
 		const attack = list[type];
