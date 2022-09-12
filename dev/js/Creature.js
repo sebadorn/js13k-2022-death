@@ -18,7 +18,12 @@ js13k.Creature = class extends EngineObject {
 		this.rand = randInt( 5, 1 );
 		this._animTimerIdle = new Timer( this.rand );
 
+		this.mirror = 0;
 		this.type = type;
+
+		if( type == js13k.Creature.GIANT ) {
+			this.pos.y += 0.25;
+		}
 
 		const map = [];
 		map[js13k.Creature.BEAST] = [
@@ -30,26 +35,26 @@ js13k.Creature = class extends EngineObject {
 			24, // tileIndex
 			 0, // tileSize
 		];
-		map[js13k.Creature.SNAKE] = [
-			 8, // soulPower
+		map[js13k.Creature.SKELETON] = [
+			 6, // soulPower
 			 1, // moveDistance
 			 5, // viewRange
-			 5, // attackDamage
+			10, // attackDamage
 			 1, // attackRange
-			25, // tileIndex
+			37, // tileIndex
 			 0, // tileSize
 		];
 		map[js13k.Creature.GIANT] = [
 			20, // soulPower
 			 1, // moveDistance
 			 5, // viewRange
-			10, // attackDamage
+			12, // attackDamage
 			 1, // attackRange
 			 8, // tileIndex
 			tileSizeDefault, // tileSize
 		];
 		map[js13k.Creature.SOUL] = [
-			12, // soulPower
+			14, // soulPower
 			 1, // moveDistance
 			20, // viewRange
 			 2, // attackDamage
@@ -105,6 +110,10 @@ js13k.Creature = class extends EngineObject {
 		this.soulPower -= this.attackCost;
 
 		return cbEnd => {
+			if( isPlayer ) {
+				cameraPos = origPos;
+			}
+
 			this.isWalking = true;
 
 			if( timerTo.elapsed() ) {
@@ -124,6 +133,12 @@ js13k.Creature = class extends EngineObject {
 
 				target.soulPower -= this.attackDamage;
 				isPlayer ? js13k.soundHit1.play() : js13k.soundHit2.play();
+				js13k.UI.effectSP( target, -this.attackDamage );
+				js13k.UI.effectBloodHit( target, { pos: origPos } );
+
+				if( !isPlayer ) {
+					js13k.UI.effectRumble();
+				}
 
 				if( target.soulPower <= 0 ) {
 					target.die();
@@ -131,7 +146,7 @@ js13k.Creature = class extends EngineObject {
 					// Destroying an enemy increases soul power.
 					if( isPlayer ) {
 						this.soulPower += 5;
-						js13k.UI.effectSP( this, 5 );
+						js13k.UI.effectSP( { pos: origPos }, 5 );
 					}
 				}
 
@@ -142,8 +157,6 @@ js13k.Creature = class extends EngineObject {
 				this.isWalking = false;
 				this.mirror = target.pos.x < origPos.x;
 				this.pos = origPos;
-
-				js13k.UI.effectSP( target, -this.attackDamage );
 
 				cbEnd();
 
@@ -159,10 +172,6 @@ js13k.Creature = class extends EngineObject {
 				this.angle *= -1;
 				stepPos = this.pos.copy();
 			}
-
-			if( isPlayer ) {
-				cameraPos = origPos;
-			}
 		};
 	}
 
@@ -174,7 +183,8 @@ js13k.Creature = class extends EngineObject {
 		let action = null;
 
 		const player = js13k.currentLevel.player;
-		const distance = this.pos.distance( player.pos );
+		const thisPos = this.pos.floor();
+		const distance = thisPos.distance( player.pos );
 
 		// Player is within view range.
 		if( distance <= this.viewRange ) {
@@ -185,7 +195,7 @@ js13k.Creature = class extends EngineObject {
 			}
 			// Move towards player.
 			else if( this.movesLeft ) {
-				const normedDirection = player.pos.subtract( this.pos ).normalize();
+				const normedDirection = player.pos.subtract( thisPos ).normalize();
 				const maxSteps = min( this.movesLeft, distance );
 				let step = 1;
 				let lastTarget = null;
@@ -194,7 +204,7 @@ js13k.Creature = class extends EngineObject {
 				// a free tile on the path there. Only relevant for
 				// creatures if a moveDistance >= 2.
 				while( step <= maxSteps ) {
-					const target = this.pos.add( normedDirection.scale( step ) );
+					const target = thisPos.add( normedDirection.scale( step ) );
 					target.x = Math.round( clamp( target.x, 0, js13k.currentLevel.size.x - 1 ) );
 					target.y = Math.round( clamp( target.y, 0, js13k.currentLevel.size.y - 1 ) );
 
@@ -203,8 +213,17 @@ js13k.Creature = class extends EngineObject {
 						break;
 					}
 
+					// Allow giants to stand on the same tile as other
+					// creatures, except the player and another giant.
+					if( this.type == js13k.Creature.GIANT ) {
+						const tileContent = js13k.currentLevel.getTileContent( target ) || [];
+
+						if( tileContent.find( c => !( c instanceof js13k.Creature ) || c.type == js13k.Creature.GIANT || c === player ) ) {
+							break;
+						}
+					}
 					// Tile cannot be moved to if not empty.
-					if( js13k.currentLevel.getTileContent( target ) ) {
+					else if( js13k.currentLevel.getTileContent( target ) ) {
 						break;
 					}
 
@@ -278,6 +297,11 @@ js13k.Creature = class extends EngineObject {
 
 			this.renderOrder = this.pos.y;
 
+			if( this.type == js13k.Creature.GIANT ) {
+				this.pos.y += 0.25;
+				this.renderOrder -= 0.75;
+			}
+
 			if( timer.elapsed() ) {
 				this.angle = 0;
 				this.isWalking = false;
@@ -338,7 +362,13 @@ js13k.Creature = class extends EngineObject {
 			else if( this.soulPower > 0 ) {
 				this.tileIndex = this._tileIndexDefault;
 
-				if( this.type !== js13k.Creature.SOUL ) {
+				if( this.type == js13k.Creature.SKELETON ) {
+					if( this._animTimerIdle.elapsed() ) {
+						this.mirror = this.mirror ? 0 : 1;
+						this._animTimerIdle.set( 5 );
+					}
+				}
+				else if( this.type !== js13k.Creature.SOUL ) {
 					if( this._animTimerIdle.elapsed() ) {
 						this._animTimerIdle.set( 2.5 );
 					}
@@ -357,6 +387,6 @@ js13k.Creature = class extends EngineObject {
 
 
 js13k.Creature.BEAST = 1;
-js13k.Creature.SNAKE = 2;
+js13k.Creature.SKELETON = 2;
 js13k.Creature.GIANT = 3;
 js13k.Creature.SOUL = 4;

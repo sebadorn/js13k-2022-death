@@ -39,6 +39,7 @@ js13k.Player = class extends js13k.Creature {
 				targets.forEach( target => {
 					target.soulPower -= this.attackDamage;
 					js13k.UI.effectSP( target, -this.attackDamage );
+					js13k.UI.effectBloodHit( target, this );
 
 					if( target.soulPower <= 0 ) {
 						target.die();
@@ -93,6 +94,7 @@ js13k.Player = class extends js13k.Creature {
 					const dmg = max( this.attackDamage - i * 2, 0 );
 					target.soulPower -= dmg;
 					js13k.UI.effectSP( target, -dmg );
+					js13k.UI.effectBloodHit( target, this );
 
 					if( target.soulPower <= 0 ) {
 						target.die();

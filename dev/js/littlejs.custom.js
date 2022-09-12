@@ -9,7 +9,6 @@
 'use strict';
 
 let showWatermark = 0;
-let godMode = 0;
 
 /**
  * LittleJS Utility Classes and Functions
@@ -555,28 +554,6 @@ let gamepadDirectionEmulateStick = 1;
  *  @memberof Settings */
 let inputWASDEmulateDirection = 1;
 
-/** True if touch gamepad should appear on mobile devices
- *  <br> - Supports left analog stick, 4 face buttons and start button (button 9)
- *  <br> - Must be set by end of gameInit to be activated
- *  @default
- *  @memberof Settings */
-let touchGamepadEnable = 0;
-
-/** True if touch gamepad should be analog stick or false to use if 8 way dpad
- *  @default
- *  @memberof Settings */
-let touchGamepadAnalog = 1;
-
-/** Size of virutal gamepad for touch devices in pixels
- *  @default
- *  @memberof Settings */
-let touchGamepadSize = 80;
-
-/** Transparency of touch gamepad overlay
- *  @default
- *  @memberof Settings */
-let touchGamepadAlpha = .3;
-
 /** Allow vibration hardware if it exists
  *  @default
  *  @memberof Settings */
@@ -699,7 +676,6 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
         overlayCanvas.style = styleCanvas;
 
         gameInit();
-        touchGamepadCreate();
         engineUpdate();
     };
 
@@ -715,29 +691,15 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
         timeReal += frameTimeDeltaMS / 1e3;
         frameTimeBufferMS = min(frameTimeBufferMS + !paused * frameTimeDeltaMS, 50); // clamp incase of slow framerate
 
-        if (canvasFixedSize.x)
-        {
-            // clear set fixed size
-            overlayCanvas.width  = mainCanvas.width  = canvasFixedSize.x;
-            overlayCanvas.height = mainCanvas.height = canvasFixedSize.y;
+        // clear and set size to same as window
+        let width = min(innerWidth,  canvasMaxSize.x);
+        let height = min(innerHeight, canvasMaxSize.y);
+        // Make sure canvas size is even.
+        width -= width % 2;
+        height -= height % 2;
 
-            // fit to window by adding space on top or bottom if necessary
-            const aspect = innerWidth / innerHeight;
-            const fixedAspect = mainCanvas.width / mainCanvas.height;
-            mainCanvas.style.width  = overlayCanvas.style.width  = aspect < fixedAspect ? '100%' : '';
-            mainCanvas.style.height = overlayCanvas.style.height = aspect < fixedAspect ? '' : '100%';
-            if (glCanvas)
-            {
-                glCanvas.style.width  = mainCanvas.style.width;
-                glCanvas.style.height = mainCanvas.style.height;
-            }
-        }
-        else
-        {
-            // clear and set size to same as window
-             overlayCanvas.width  = mainCanvas.width  = min(innerWidth,  canvasMaxSize.x);
-             overlayCanvas.height = mainCanvas.height = min(innerHeight, canvasMaxSize.y);
-        }
+        overlayCanvas.width  = mainCanvas.width  = width;
+        overlayCanvas.height = mainCanvas.height = height;
 
         // save canvas size
         mainCanvasSize = vec2(mainCanvas.width, mainCanvas.height);
@@ -784,7 +746,6 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
         for (const o of engineObjects)
             o.destroyed || o.render();
         gameRenderPost();
-        touchGamepadRender();
         glCopyToContext(mainContext);
 
         if (showWatermark)
@@ -1437,21 +1398,6 @@ const mouseToScreen = (mousePos)=>
 const stickData = [];
 function gamepadsUpdate()
 {
-    if (touchGamepadEnable && touchGamepadTimer.isSet())
-    {
-        // read virtual analog stick
-        const sticks = stickData[0] || (stickData[0] = []);
-        sticks[0] = vec2(touchGamepadStick.x, -touchGamepadStick.y); // flip vertical
-
-        // read virtual gamepad buttons
-        const data = inputData[1] || (inputData[1] = []);
-        for (let i=10; i--;)
-        {
-            const j = i == 3 ? 2 : i == 2 ? 3 : i; // fix button locations
-            data[j] = touchGamepadButtons[i] ? 1 + 2*!gamepadIsDown(j,0) : 4*gamepadIsDown(j,0);
-        }
-    }
-
     if (!gamepadsEnable || !navigator.getGamepads || !document.hasFocus())
         return;
 
@@ -1482,7 +1428,6 @@ function gamepadsUpdate()
                 const button = gamepad.buttons[j];
                 data[j] = button.pressed ? 1 + 2*!gamepadIsDown(j,i) : 4*gamepadIsDown(j,i);
                 isUsingGamepad |= !i && button.pressed;
-                touchGamepadEnable && touchGamepadTimer.unset(); // disable touch gamepad if using real gamepad
             }
 
             if (gamepadDirectionEmulateStick)
@@ -1546,135 +1491,6 @@ if (isTouchDevice)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// touch gamepad, virtual on screen gamepad emulator for touch devices
-
-// touch input internal variables
-let touchGamepadTimer = new Timer, touchGamepadButtons = [], touchGamepadStick = vec2();
-
-// create the touch gamepad, called automatically by the engine
-function touchGamepadCreate()
-{
-    if (!touchGamepadEnable || !isTouchDevice)
-        return;
-
-    ontouchstart = ontouchmove = ontouchend = (e)=>
-    {
-        if (!touchGamepadEnable)
-            return;
-
-        // clear touch gamepad input
-        touchGamepadStick = vec2();
-        touchGamepadButtons = [];
-
-        const touching = e.touches.length;
-        if (touching)
-        {
-            touchGamepadTimer.isSet() || zzfx(0) ; // fix mobile audio, force it to play a sound the first time
-
-            // set that gamepad is active
-            isUsingGamepad = 1;
-            touchGamepadTimer.set();
-
-            if (paused)
-            {
-                // touch anywhere to press start when paused
-                touchGamepadButtons[9] = 1;
-                return;
-            }
-        }
-
-        // get center of left and right sides
-        const stickCenter = vec2(touchGamepadSize, mainCanvasSize.y-touchGamepadSize);
-        const buttonCenter = mainCanvasSize.subtract(vec2(touchGamepadSize, touchGamepadSize));
-        const startCenter = mainCanvasSize.scale(.5);
-
-        // check each touch point
-        for (const touch of e.touches)
-        {
-            const touchPos = mouseToScreen(vec2(touch.clientX, touch.clientY));
-            if (touchPos.distance(stickCenter) < touchGamepadSize)
-            {
-                // virtual analog stick
-                if (touchGamepadAnalog)
-                    touchGamepadStick = touchPos.subtract(stickCenter).scale(2/touchGamepadSize).clampLength();
-                else
-                {
-                    // 8 way dpad
-                    const angle = touchPos.subtract(stickCenter).angle();
-                    touchGamepadStick.setAngle((angle * 4 / PI + 8.5 | 0) * PI / 4);
-                }
-            }
-            else if (touchPos.distance(buttonCenter) < touchGamepadSize)
-            {
-                // virtual face buttons
-                const button = touchPos.subtract(buttonCenter).direction();
-                touchGamepadButtons[button] = 1;
-            }
-            else if (touchPos.distance(startCenter) < touchGamepadSize)
-            {
-                // virtual start button in center
-                touchGamepadButtons[9] = 1;
-            }
-        }
-    }
-}
-
-// render the touch gamepad, called automatically by the engine
-function touchGamepadRender()
-{
-    if (!touchGamepadEnable || !touchGamepadTimer.isSet())
-        return;
-
-    // fade off when not touching or paused
-    const alpha = percent(touchGamepadTimer.get(), 4, 3);
-    if (!alpha || paused)
-        return;
-
-    // setup the canvas
-    overlayContext.save();
-    overlayContext.globalAlpha = alpha*touchGamepadAlpha;
-    overlayContext.strokeStyle = '#fff';
-    overlayContext.lineWidth = 3;
-
-    // draw left analog stick
-    overlayContext.fillStyle = touchGamepadStick.lengthSquared() > 0 ? '#fff' : '#000';
-    overlayContext.beginPath();
-
-    const leftCenter = vec2(touchGamepadSize, mainCanvasSize.y-touchGamepadSize);
-    if (touchGamepadAnalog)
-    {
-        overlayContext.arc(leftCenter.x, leftCenter.y, touchGamepadSize/2, 0, 9);
-        overlayContext.fill();
-        overlayContext.stroke();
-    }
-    else // draw cross shaped gamepad
-    {
-        for(let i=10; i--;)
-        {
-            const angle = i*PI/4;
-            overlayContext.arc(leftCenter.x, leftCenter.y,touchGamepadSize*.6, angle + PI/8, angle + PI/8);
-            i%2 && overlayContext.arc(leftCenter.x, leftCenter.y, touchGamepadSize*.33, angle, angle);
-            i==1 && overlayContext.fill();
-        }
-        overlayContext.stroke();
-    }
-
-    // draw right face buttons
-    const rightCenter = vec2(mainCanvasSize.x-touchGamepadSize, mainCanvasSize.y-touchGamepadSize);
-    for (let i=4; i--;)
-    {
-        const pos = rightCenter.add((new Vector2).setAngle(i*PI/2, touchGamepadSize/2));
-        overlayContext.fillStyle = touchGamepadButtons[i] ? '#fff' : '#000';
-        overlayContext.beginPath();
-        overlayContext.arc(pos.x, pos.y, touchGamepadSize/4, 0,9);
-        overlayContext.fill();
-        overlayContext.stroke();
-    }
-
-    // set canvas back to normal
-    overlayContext.restore();
-}
 /**
  * LittleJS Audio System
  * <br> - <a href=https://killedbyapixel.github.io/ZzFX/>ZzFX Sound Effects</a>

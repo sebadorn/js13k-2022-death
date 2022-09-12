@@ -11,6 +11,7 @@ js13k.Level = class {
 	constructor() {
 		this.size = vec2( 15 );
 		this.step = 0;
+		this.offset = vec2();
 
 		js13k.TurnManager.reset();
 
@@ -59,7 +60,7 @@ js13k.Level = class {
 					this.objects.push( this.buildObject( vec2( x, y ), 2 ) );
 				}
 				else if( floor == 'p' ) {
-					const pillar = this.buildObject( vec2( x, y + 0.25 ), 0 );
+					const pillar = this.buildObject( vec2( x, y + 0.3 ), 0 );
 					pillar.renderOrder = pillar.pos.y + 1.5;
 
 					this.objects.push( pillar );
@@ -77,14 +78,14 @@ js13k.Level = class {
 			'       ,       ' +
 			'       ,       ' +
 			'wwwwwww,wwwwwww' +
-			'pb,,g,p,ps,,b,p' +
-			',,sb,,bsb,,g,sb' +
+			'pb,,g,p,psk,b,p' +
+			',ksb,,bsb,,g,sb' +
 			'bb           s,' +
 			',bwwwwwwwwwww,b' +
-			'ss,b,p,,,p,b,s,' +
-			',,b,b,,g,bb,,,s' +
+			'ss,b,pk,,p,b,s,' +
+			',kb,b,,g,bb,k,s' +
 			's,b,,,b,,,s,,b,' +
-			'    ,pbb,p,    ' +
+			'    ,pbbkp,    ' +
 			'    s,,,bb,    ' +
 			'    ,b,,,,s    ' +
 			'    ,p,,,p,    ' +
@@ -93,16 +94,20 @@ js13k.Level = class {
 		for( let y = 0; y < this.size.y; y++ ) {
 			for( let x = 0; x < this.size.x; x++ ) {
 				const m = monsterPlan[( this.size.y - 1 - y ) * this.size.x + x];
+				const pos = vec2( x, y );
 				let monster = null;
 
 				if( m == 'b' ) {
-					monster = new js13k.Creature( js13k.Creature.BEAST, vec2( x, y ), vec2( 0.5 ) );
+					monster = new js13k.Creature( js13k.Creature.BEAST, pos, vec2( 0.5 ) );
 				}
 				else if( m == 'g' ) {
-					monster = new js13k.Creature( js13k.Creature.GIANT, vec2( x, y ), vec2( 1 ) );
+					monster = new js13k.Creature( js13k.Creature.GIANT, pos, vec2( 1 ) );
+				}
+				else if( m == 'k' ) {
+					monster = new js13k.Creature( js13k.Creature.SKELETON, pos, vec2( 0.5 ) );
 				}
 				else if( m == 's' ) {
-					monster = new js13k.Creature( js13k.Creature.SOUL, vec2( x, y ), vec2( 0.5 ) );
+					monster = new js13k.Creature( js13k.Creature.SOUL, pos, vec2( 0.5 ) );
 				}
 
 				if( monster ) {
@@ -245,15 +250,15 @@ js13k.Level = class {
 				}
 				else if( this.step == 10 ) {
 					this.step = 11;
-					this.playOutroTimer.set( 3 );
+					this.playOutroTimer.set( 4.5 );
 				}
 				else if( this.step == 11 ) {
 					this.step = 12;
-					this.playOutroTimer.set( 4 );
+					this.playOutroTimer.set( 4.5 );
 				}
 				else if( this.step == 12 ) {
 					this.step = 13;
-					this.playOutroTimer.set( 5 );
+					this.playOutroTimer.set( 5.5 );
 				}
 				else if( this.step == 13 ) {
 					this.step = 14;
@@ -266,11 +271,11 @@ js13k.Level = class {
 				}
 				else if( this.step == 15 ) {
 					this.step = 16;
-					this.playOutroTimer.set( 1 );
+					this.playOutroTimer.set( 2 );
 				}
 				else if( this.step == 16 ) {
 					this.step = 17;
-					this.playOutroTimer.set( 5 );
+					this.playOutroTimer.set( 5.5 );
 				}
 				else {
 					paused = true;
@@ -289,6 +294,7 @@ js13k.Level = class {
 			}
 
 			const screenPosHel = worldToScreen( this.player.pos.add( helPosAdd ) );
+			const textPosX = Math.round( screenPosHel.x + progress * 8 );
 
 			if( this.step == 10 ) {
 				overlayContext.globalAlpha = progress;
@@ -297,42 +303,47 @@ js13k.Level = class {
 			else if( this.step == 11 ) {
 				this._outroDrawHel( screenPosHel, size, sizeHalf );
 				overlayContext.globalAlpha = 1 - progress * progress;
-				overlayContext.fillText( 'You have done well, warrior.', screenPosHel.x, screenPosHel.y - 76 );
+				overlayContext.fillText(
+					'You have done well, warrior.',
+					textPosX,
+					screenPosHel.y - 76
+				);
 			}
 			else if( this.step == 12 ) {
 				this._outroDrawHel( screenPosHel, size, sizeHalf );
 				overlayContext.globalAlpha = 1 - progress * progress;
-				overlayContext.fillText( 'Now it is my turn.', screenPosHel.x, screenPosHel.y - 76 );
+				overlayContext.fillText(
+					'I will send you off to Valhalla.',
+					textPosX,
+					screenPosHel.y - 76
+				);
 			}
 			else if( this.step == 13 ) {
 				this._outroDrawHel( screenPosHel, size, sizeHalf );
 				overlayContext.globalAlpha = 1 - progress * progress;
 				overlayContext.fillText(
-					'Fall a second time...',
-					Math.round( screenPosHel.x - progress * 8 ),
-					screenPosHel.y - 100
-				);
-				overlayContext.fillText(
-					'...and ascend for the first.',
-					Math.round( screenPosHel.x + progress * 8 ),
+					'You may die in honor now.',
+					textPosX,
 					screenPosHel.y - 76
 				);
 			}
 			else if( this.step == 14 ) {
-				const slashWidth = size * 3;
+				const slashWidth = size * 2;
 				this._outroDrawHel( screenPosHel, size, sizeHalf );
 				overlayContext.fillStyle = '#f00';
 				overlayContext.fillRect(
-					screenPosPlayer.x + 32, screenPosPlayer.y,
+					screenPosPlayer.x + size,
+					screenPosPlayer.y,
 					-slashWidth * progress, 3
 				);
 			}
 			else if( this.step == 15 ) {
-				const slashWidth = size * 3;
+				const slashWidth = size * 2;
 				this._outroDrawHel( screenPosHel, size, sizeHalf );
 				overlayContext.fillStyle = '#f00';
 				overlayContext.fillRect(
-					screenPosPlayer.x + 32 - slashWidth * progress, screenPosPlayer.y,
+					screenPosPlayer.x + size - slashWidth * progress,
+					screenPosPlayer.y,
 					-slashWidth * ( 1 - progress ), 3
 				);
 			}
@@ -384,7 +395,7 @@ js13k.Level = class {
 				32, 32,
 				// destination
 				max( Math.round( overlayCanvas.width * 0.5 - 700 ), 0 ),
-				Math.round( overlayCanvas.height * 0.5 ),
+				overlayCanvas.height - 512,
 				512, 512
 			);
 		}
@@ -431,7 +442,7 @@ js13k.Level = class {
 			return;
 		}
 
-		cameraPos = this.player.pos.copy();
+		cameraPos = this.player.pos.add( this.offset );
 		js13k.TurnManager.doTurn();
 	}
 
